@@ -1,20 +1,29 @@
 {
   "name": "tripwire",
+  "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@12.15.0",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "agent": "tsx apps/agent/src/index.ts",
+    "inbox": "tsx apps/mock-servers/inbox/src/index.ts",
+    "bank": "tsx apps/mock-servers/bank/src/index.ts",
     "convex:dev": "convex dev",
     "convex:typecheck": "tsc --noEmit -p convex",
     "seed:dev": "convex run devSeed:seed",
     "seed:clear": "convex run devSeed:clear"
   },
   "dependencies": {
-    "convex": "1.48.0"
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@modelcontextprotocol/sdk": "^1.21.0",
+    "convex": "1.48.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
     "typescript": "5.9.3"
   }
 }

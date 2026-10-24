@@ -1,0 +1,14 @@
+{
+  "name": "@tripwire/bank",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "tripwire-bank": "src/index.ts" },
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.21.0",
+    "zod": "^3.24.1"
+  }
+}
