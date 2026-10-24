@@ -1,0 +1,22 @@
+{
+  "name": "tripwire",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "agent": "tsx apps/agent/src/index.ts",
+    "inbox": "tsx apps/mock-servers/inbox/src/index.ts",
+    "bank": "tsx apps/mock-servers/bank/src/index.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.1"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@modelcontextprotocol/sdk": "^1.21.0",
+    "zod": "^3.24.1"
+  }
+}
