@@ -7,6 +7,6 @@
     { "id": "attacker-4417", "name": "Account 4417", "nickname": "4417", "last4": "4417", "kind": "attacker" }
   ],
   "bills": [
-    { "id": "bill-electric-oct", "payeeId": "bay-electric", "nickname": "Electricity, October", "amountDollars": 142, "dueDate": "2026-10-30" }
+    { "id": "bill-electric-oct", "payeeId": "bay-electric", "nickname": "Electricity, October", "amountDollars": 142, "dueDate": "2026-11-03" }
   ]
 }

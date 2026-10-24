@@ -9,7 +9,7 @@
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { pathToFileURL } from "node:url";
-import { backendKindFromEnv, createBackend } from "./backends/index.js";
+import { backendKindFromEnv, createBackend, stateKindFromEnv } from "./backends/index.js";
 import { loadEnv } from "./env.js";
 import { formatUsd } from "./money.js";
 import { ConvexStore, type StateStore } from "./state.js";
@@ -75,6 +75,12 @@ export function createControlHandler(
 // Run as a script (not when imported by tests).
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   loadEnv();
+  if (stateKindFromEnv() === "memory") {
+    console.error(
+      "[bank-control] BANK_STATE=memory: each bank process keeps its own state, so there is nothing to reset over HTTP. Restart the bank process instead.",
+    );
+    process.exit(1);
+  }
   const kind = backendKindFromEnv();
   const port = Number(process.env.BANK_CONTROL_PORT ?? 8788);
   const handler = createControlHandler((scenario) => createBackend(kind, scenario), new ConvexStore());

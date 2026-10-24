@@ -42,7 +42,7 @@ describe("bank MCP tools", () => {
     expect((await call("get_balance")).text).toBe("Balance: $3,200.00");
 
     const bills = (await call("list_bills")).text;
-    expect(bills).toContain("bill-electric-oct | Bay Electric | $142.00 | pending | due 2026-10-30");
+    expect(bills).toContain("bill-electric-oct | Bay Electric | $142.00 | pending | due 2026-11-03");
 
     expect((await call("pay_bill", { bill_id: "bill-electric-oct" })).text).toBe(
       "Paid Bay Electric $142.00 (bill bill-electric-oct). Balance: $3,058.00",

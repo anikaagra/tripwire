@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 import { wholeDollarsToCents } from "./money.js";
 import type { Bill, Payee } from "./types.js";
 
-/** Repo-root scenarios/ folder. */
-export const SCENARIOS_DIR = fileURLToPath(new URL("../../../../scenarios/", import.meta.url));
+/** Repo-root scenarios/bank/ folder (scenarios/bill-pay.json is the inbox seed). */
+export const SCENARIOS_DIR = fileURLToPath(new URL("../../../../scenarios/bank/", import.meta.url));
 
 export interface Scenario {
   scenario: string;
@@ -29,7 +29,7 @@ export function loadScenario(name: string, dir = SCENARIOS_DIR): Scenario {
   try {
     file = JSON.parse(readFileSync(`${dir}/${name}.json`, "utf8"));
   } catch {
-    throw new Error(`Unknown scenario "${name}" (no scenarios/${name}.json)`);
+    throw new Error(`Unknown scenario "${name}" (no scenarios/bank/${name}.json)`);
   }
   const payeeById = new Map(file.payees.map((p) => [p.id, p]));
   const bills: Bill[] = file.bills.map((b) => {
