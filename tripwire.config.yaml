@@ -1,0 +1,24 @@
+# Tripwire proxy config. 
+
+mode: enforce # off | monitor | enforce
+
+proxy:
+  stdio: true
+  http:
+    port: 8787
+
+policyFile: ./tripwire.policy.yaml
+
+upstreams:
+  - name: inbox
+    transport: stdio
+    command: pnpm
+    args: ["--filter", "@tripwire/mock-inbox", "start"]
+
+  - name: bank
+    transport: stdio
+    command: pnpm
+    args: ["--filter", "@tripwire/mock-bank", "start"]
+
+approvals:
+  timeoutMs: 60000

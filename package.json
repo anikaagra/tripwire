@@ -2,6 +2,7 @@
   "name": "tripwire",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@12.15.0",
   "engines": {
     "node": ">=20"
@@ -10,6 +11,12 @@
     "agent": "tsx apps/agent/src/index.ts",
     "inbox": "tsx apps/mock-servers/inbox/src/index.ts",
     "bank": "tsx apps/mock-servers/bank/src/index.ts",
+    "proxy": "pnpm --filter @tripwire/proxy start",
+    "approve": "pnpm --filter @tripwire/proxy approve",
+    "deny": "pnpm --filter @tripwire/proxy deny",
+    "build": "pnpm -r build",
+    "test": "vitest run",
+    "typecheck": "pnpm -r typecheck",
     "convex:dev": "convex dev",
     "convex:typecheck": "tsc --noEmit -p convex",
     "seed:dev": "convex run devSeed:seed",
@@ -22,8 +29,9 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
-    "typescript": "5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
   }
 }
