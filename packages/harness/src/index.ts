@@ -143,16 +143,16 @@ function attackEnv(attack: AttackSeed | undefined): Record<string, string> {
 async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
   // Env for the mock servers:
   //   inbox reads TRIPWIRE_SCENARIO; the bank reads BANK_SCENARIO / BANK_STATE / BANK_BACKEND.
-  //   BANK_STATE=memory gives each run a private in-process bank (no Convex dependency and
-  //   safe for the red team's parallel runs). Attack seeds (TRIPWIRE_*) feed both servers.
+  //   BANK_STATE and BANK_BACKEND are NOT forced here: they pass through from the caller's
+  //   env (cleanEnv copies process.env). The red team runner sets BANK_STATE=memory (private,
+  //   parallel-safe bank per run); the demo (`pnpm agent`) leaves it unset, so the bank uses
+  //   its defaults (Convex state) and the dashboard moves. Attack seeds (TRIPWIRE_*) feed both servers.
   const bankOverride: Record<string, string> = opts.bankBackend
     ? { BANK_BACKEND: opts.bankBackend, ...(opts.bankBackend === "nessie" ? { BANK_RESET_ON_START: "1" } : {}) }
     : {};
   const env = cleanEnv({
     TRIPWIRE_SCENARIO: opts.scenario,
     BANK_SCENARIO: opts.scenario,
-    BANK_STATE: "memory", // local backend only; Nessie ignores it
-    BANK_BACKEND: "local",
     ...bankOverride,
     ...attackEnv(opts.attack),
   });
@@ -174,17 +174,15 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
       : 8800 + Math.floor(Math.random() * 1000);
     // The proxy inherits this env and passes it to the bank upstream (BANK_* + attack
     // seeds). TRIPWIRE_MODE forces enforce; TRIPWIRE_SESSION_ID pins the session so our
-    // intent POST and the agent's calls share it. BANK_STATE=memory keeps each run's bank
-    // private (no Convex dependency, parallel-safe).
+    // intent POST and the agent's calls share it. BANK_STATE / BANK_BACKEND pass through
+    // from the caller's env, as in off mode (red team: memory; demo: Convex).
     const proxy = await connectStdio(
       "proxy",
       process.execPath,
       ["--import", "tsx", proxyMain],
       cleanEnv({
         BANK_SCENARIO: opts.scenario,
-        BANK_STATE: "memory",
-        BANK_BACKEND: "local",
-        ...bankOverride, // lets --backend nessie override the local defaults
+        ...bankOverride, // --backend nessie from the red team runner
         ...attackEnv(opts.attack),
         TRIPWIRE_MODE: "enforce",
         TRIPWIRE_SESSION_ID: sessionId,
