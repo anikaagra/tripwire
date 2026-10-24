@@ -9,7 +9,11 @@
     "convex:dev": "convex dev",
     "convex:typecheck": "tsc --noEmit -p convex",
     "seed:dev": "convex run devSeed:seed",
-    "seed:clear": "convex run devSeed:clear"
+    "seed:clear": "convex run devSeed:clear",
+    "bank:start": "pnpm --silent --filter @tripwire/bank start",
+    "bank:control": "pnpm --silent --filter @tripwire/bank control",
+    "bank:test": "pnpm --filter @tripwire/bank test",
+    "bank:typecheck": "pnpm --filter @tripwire/bank typecheck"
   },
   "dependencies": {
     "convex": "1.48.0"
