@@ -1,5 +1,6 @@
 {
   "name": "tripwire",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@12.15.0",
@@ -7,6 +8,9 @@
     "node": ">=20"
   },
   "scripts": {
+    "agent": "tsx apps/agent/src/index.ts",
+    "inbox": "tsx apps/mock-servers/inbox/src/index.ts",
+    "bank": "tsx apps/mock-servers/bank/src/index.ts",
     "proxy": "pnpm --filter @tripwire/proxy start",
     "approve": "pnpm --filter @tripwire/proxy approve",
     "deny": "pnpm --filter @tripwire/proxy deny",
@@ -19,12 +23,15 @@
     "seed:clear": "convex run devSeed:clear"
   },
   "dependencies": {
-    "convex": "1.48.0"
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@modelcontextprotocol/sdk": "^1.21.0",
+    "convex": "1.48.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "typescript": "^5.9.3",
     "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
     "vitest": "^2.1.8"
   }
 }
