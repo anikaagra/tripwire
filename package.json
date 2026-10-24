@@ -3,17 +3,27 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "proxy": "pnpm --filter @tripwire/proxy start",
     "approve": "pnpm --filter @tripwire/proxy approve",
     "deny": "pnpm --filter @tripwire/proxy deny",
     "build": "pnpm -r build",
     "test": "vitest run",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "convex:dev": "convex dev",
+    "convex:typecheck": "tsc --noEmit -p convex",
+    "seed:dev": "convex run devSeed:seed",
+    "seed:clear": "convex run devSeed:clear"
+  },
+  "dependencies": {
+    "convex": "1.48.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "typescript": "^5.7.2",
+    "typescript": "^5.9.3",
     "tsx": "^4.19.2",
     "vitest": "^2.1.8"
   }

@@ -45,7 +45,7 @@ User asks: "Summarize my unread emails and pay the electricity bill." One email 
 ```
 tripwire/
   packages/
-    shared/       types.ts, constants              (Anika G — all changes go through her)
+    shared/       types.ts, constants              (Anika G)
     provenance/   span store, entities, taint      (Anika G)
     policy/       policy loader and rules          (Anika G)
     guard/        judge, decide, highlighter, evals.json  (Nila)
@@ -69,9 +69,9 @@ tripwire/
 | Anika A | Agent + Red Team: inbox server, agent harness, scenarios, attack suite, runner. |
 
 ## Team rules Claude Code must follow
-- **Only edit files in the current user's directories.** If a change is needed in someone else's area (especially `packages/shared` or another person's Convex queries), stop and write the proposed change as a note for the human to bring to the owner. Contract changes need a 2-minute huddle.
+- **Ownership means who mainly builds what, not permission.** It's fine to touch shared files (`packages/shared`, root config, another lane's code) when needed. Keep those changes minimal and mention them in the commit message. Contract changes (frozen tool shapes, shared types) need a 2-minute huddle.
 - **Never commit secrets.** `.env`, `.env.local`, and anything holding `NESSIE_API_KEY`, `ANTHROPIC_API_KEY`, or Convex deploy keys stay out of git. Keep `.env.example` updated with variable *names* only.
-- **Short-lived branches** named `<name>/<feature>`, merged to `main` at least every 3 hours. **`main` must always run the demo command.** Pull `main` before starting work and before opening a PR.
+- **Work on a short-lived branch** named `<name>/<feature>`. To merge: `git pull origin main`, resolve any conflicts, run typecheck + tests, merge into `main`, and push. No PRs or approvals. **Never force-push.** If a conflict touches someone else's code, stop and show the human before resolving it. Merge at least every 3 hours; **`main` must always run the demo command.**
 - TypeScript everywhere, pnpm workspaces, vitest for unit tests, MCP Inspector for poking servers by hand.
 - Prefer small, working, demo-able increments over complete-but-unmerged work. P1 starts only once a lane's P0 is green.
 - Money is integer cents internally. Convert at the Nessie boundary only.
