@@ -15,8 +15,7 @@ import type { EventLog } from "./eventLog.js";
 import type { ApprovalBackend } from "./approvals/approvalBackend.js";
 import type { SpanLog } from "./spanLog.js";
 import { NoopSpanLog } from "./spanLog.js";
-import { judge as guardJudge } from "@tripwire/guard";
-import { decide as localDecide } from "./decide.js";
+import { decide as guardDecide, judge as guardJudge } from "@tripwire/guard";
 
 export interface PipelineDeps {
   policyResolver: PolicyResolver;
@@ -56,7 +55,7 @@ export class Pipeline {
 
   constructor(private readonly deps: PipelineDeps) {
     this.judge = deps.judge ?? guardJudge;
-    this.decideFn = deps.decide ?? localDecide;
+    this.decideFn = deps.decide ?? guardDecide;
     this.spanLog = deps.spanLog ?? new NoopSpanLog();
     this.now = deps.now ?? Date.now;
   }
