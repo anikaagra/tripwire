@@ -12,6 +12,7 @@ import type * as approvals from "../approvals.js";
 import type * as devSeed from "../devSeed.js";
 import type * as envState from "../envState.js";
 import type * as events from "../events.js";
+import type * as recordings from "../recordings.js";
 import type * as redteam from "../redteam.js";
 import type * as sessions from "../sessions.js";
 import type * as sharedTypesCheck from "../sharedTypesCheck.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   devSeed: typeof devSeed;
   envState: typeof envState;
   events: typeof events;
+  recordings: typeof recordings;
   redteam: typeof redteam;
   sessions: typeof sessions;
   sharedTypesCheck: typeof sharedTypesCheck;

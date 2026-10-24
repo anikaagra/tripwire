@@ -17,7 +17,7 @@
  * - Anika G (convex/sessions.ts, convex/events.ts, convex/approvals.ts):
  *     currentSession, eventsBySession, eventById, spanById, pendingApprovals, decide
  * - Anika A (convex/redteam.ts): latestRun, attacksByRun
- * - Asmi: envState (convex/envState.ts, done), recordingById (later)
+ * - Asmi: envState (convex/envState.ts), recordings (convex/recordings.ts)
  * Pull main before running `npx convex dev`: it pushes your whole local convex/
  * folder and would remove functions you don't have locally.
  */
@@ -132,6 +132,33 @@ export const outboxEmail = v.object({
   ts: v.number(),
 });
 
+export const envSnapshot = v.object({
+  offsetMs: v.number(),
+  balance: v.number(), // cents
+  attackerReceived: v.number(), // cents
+});
+
+export const recording = v.object({
+  id: v.string(),
+  runId: v.string(), // the bank's envState.runId for this session
+  sessionId: v.optional(v.string()),
+  createdAt: v.number(),
+  // Session snapshot, so a replay still has its header after the session row is gone.
+  intent: v.optional(v.string()),
+  mode: v.optional(mode),
+  scenario: v.optional(v.string()),
+  backend: v.optional(backend),
+  events: v.array(
+    v.object({
+      offsetMs: v.number(), // ms since the session started (or the first event), for replay timing
+      event: toolCallEvent,
+    }),
+  ),
+  // Balance over time; `pnpm record` after the fact stores only the final state.
+  envStates: v.optional(v.array(envSnapshot)),
+  truncated: v.optional(v.boolean()),
+});
+
 export default defineSchema({
   // No shared Session type yet. Matches the proxy's Session (apps/proxy/src/sessions.ts)
   // so it can be inserted as-is, plus optional fields from the design doc.
@@ -202,19 +229,10 @@ export default defineSchema({
     .index("by_record_id", ["id"])
     .index("by_run", ["runId"]),
 
-  // Keep under Convex's 1 MB document limit: one recording per demo run.
-  recordings: defineTable({
-    id: v.string(),
-    runId: v.string(),
-    sessionId: v.optional(v.string()),
-    createdAt: v.number(),
-    events: v.array(
-      v.object({
-        offsetMs: v.number(), // time since the first event, for replay timing
-        event: toolCallEvent,
-      }),
-    ),
-  })
+  // A replayable demo run (apps/tail: `pnpm record`, `pnpm tail --record`).
+  // Keep under Convex's 1 MB document limit: one recording per demo run (≤ 500 events).
+  recordings: defineTable(recording)
     .index("by_record_id", ["id"])
-    .index("by_run", ["runId"]),
+    .index("by_run", ["runId"])
+    .index("by_createdAt", ["createdAt"]),
 });

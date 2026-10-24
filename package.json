@@ -31,7 +31,9 @@
     "bank:typecheck": "pnpm --filter @tripwire/mock-bank typecheck",
     "nessie:verify": "pnpm --silent --filter @tripwire/mock-bank nessie:verify",
     "nessie:seed": "pnpm --silent --filter @tripwire/mock-bank nessie:seed",
-    "bank:reset": "pnpm --silent --filter @tripwire/mock-bank reset"
+    "bank:reset": "pnpm --silent --filter @tripwire/mock-bank reset",
+    "tail": "pnpm --silent --filter @tripwire/tail start",
+    "record": "pnpm --silent --filter @tripwire/tail record"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
