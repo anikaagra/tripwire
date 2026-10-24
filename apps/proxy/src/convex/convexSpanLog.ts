@@ -10,16 +10,9 @@ export class ConvexSpanLog implements SpanLog {
 
   async record(span: UntrustedSpan): Promise<void> {
     try {
-      await this.client.mutation(recordSpan, {
-        spanId: span.id,
-        sessionId: span.sessionId,
-        server: span.server,
-        tool: span.tool,
-        itemId: span.itemId,
-        text: span.text,
-        rawHtml: span.rawHtml,
-        entities: span.entities,
-      });
+      // spans:record's args mirror UntrustedSpan exactly (field "id"), so
+      // the span passes through with no remapping.
+      await this.client.mutation(recordSpan, span);
     } catch (err) {
       console.error(`[tripwire] Convex span write failed: ${(err as Error).message}`);
     }

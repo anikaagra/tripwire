@@ -58,7 +58,7 @@ export class ConvexApprovalBackend implements ApprovalBackend {
 
 function toApprovalRecord(row: Record<string, unknown>): ApprovalRecord {
   return {
-    id: String(row.approvalId),
+    id: String(row.id),
     eventId: String(row.eventId),
     status: row.status as ApprovalRecord["status"],
     createdAt: Number(row.createdAt),

@@ -1,5 +1,10 @@
 /**
  * Session rows. Owner: Anika G.
+ *
+ * sessions' primary key field is "id" (no shared Session type yet, but it
+ * follows the same by_record_id convention as every other table here —
+ * see schema.ts). Mutation args below keep the external name "sessionId"
+ * for clarity to callers.
  */
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
@@ -10,13 +15,13 @@ export const upsert = mutation({
     sessionId: v.string(),
     mode: modeValidator,
     intent: v.string(),
-    scenario: v.string(),
+    scenario: v.optional(v.string()),
     backend: v.optional(backendValidator),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("sessions")
-      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+      .withIndex("by_record_id", (q) => q.eq("id", args.sessionId))
       .unique();
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -28,7 +33,7 @@ export const upsert = mutation({
       return existing._id;
     }
     return await ctx.db.insert("sessions", {
-      sessionId: args.sessionId,
+      id: args.sessionId,
       mode: args.mode,
       intent: args.intent,
       scenario: args.scenario,
@@ -44,7 +49,7 @@ export const setIntent = mutation({
   handler: async (ctx, { sessionId, intent }) => {
     const existing = await ctx.db
       .query("sessions")
-      .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+      .withIndex("by_record_id", (q) => q.eq("id", sessionId))
       .unique();
     if (!existing) throw new Error(`No session ${sessionId}`);
     await ctx.db.patch(existing._id, { intent });
@@ -56,7 +61,7 @@ export const setContextTainted = mutation({
   handler: async (ctx, { sessionId }) => {
     const existing = await ctx.db
       .query("sessions")
-      .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+      .withIndex("by_record_id", (q) => q.eq("id", sessionId))
       .unique();
     if (existing && !existing.contextTainted) {
       await ctx.db.patch(existing._id, { contextTainted: true });
@@ -69,7 +74,7 @@ export const end = mutation({
   handler: async (ctx, { sessionId }) => {
     const existing = await ctx.db
       .query("sessions")
-      .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+      .withIndex("by_record_id", (q) => q.eq("id", sessionId))
       .unique();
     if (existing) await ctx.db.patch(existing._id, { endedAt: Date.now() });
   },
@@ -82,7 +87,7 @@ export const currentSession = query({
     if (sessionId) {
       return await ctx.db
         .query("sessions")
-        .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
+        .withIndex("by_record_id", (q) => q.eq("id", sessionId))
         .unique();
     }
     const [latest] = await ctx.db.query("sessions").withIndex("by_startedAt").order("desc").take(1);
