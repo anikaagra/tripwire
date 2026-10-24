@@ -84,5 +84,5 @@ the policy needs a `pay_bill` amount-escalate rule — proposed snippet for Anik
     risk: high
     trustedDescription: Pays one of the user's own pending bills in full, from the user's checking account to the bill's payee.
     rules:
-      escalateOverAmountCents: 100000   # bills over $1,000 -> escalate -> ask (user did request paying it)
+      escalateOverAmountCents: 30000    # bills over $300 -> escalate -> ask (the $486 large bill trips it; the ~$142 normal bill doesn't)
 ```
