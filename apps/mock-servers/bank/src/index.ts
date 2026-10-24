@@ -4,8 +4,11 @@
  *   BANK_SCENARIO=bill-pay     (default bill-pay; bill-pay-large for the ask demo;
  *                               falls back to TRIPWIRE_SCENARIO)
  *   TRIPWIRE_BILL_FIELD_INJECTION, TRIPWIRE_ATTACK_BILL: red team hooks (src/attackSeeds.ts)
- *   BANK_STATE=convex|memory   (default convex; memory = private bank per process,
- *                               for parallel red team runs)
+ *   BANK_STATE=convex|memory   (local backend only. default convex; memory = private bank
+ *                               per process, for parallel red team runs. Nessie mode
+ *                               always mirrors state to Convex.)
+ *   BANK_RESET_ON_START=1      reset the scenario before serving (the red team uses this so
+ *                               each attack gets a fresh runId and its hooks applied)
  * stdout carries the MCP protocol, so all logging goes to stderr.
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -22,11 +25,12 @@ try {
   const scenario = process.env.BANK_SCENARIO ?? process.env.TRIPWIRE_SCENARIO ?? "bill-pay";
   const state = stateKindFromEnv();
   const backend = createBackend(kind, scenario, state);
+  if (process.env.BANK_RESET_ON_START === "1") await backend.reset(scenario);
 
   const server = new McpServer({ name: "bank", version: "0.1.0" });
   registerBankTools(server, backend);
   await server.connect(new StdioServerTransport());
-  console.error(`[bank] ready on stdio (backend=${kind}, state=${state}, scenario=${scenario})`);
+  console.error(`[bank] ready on stdio (backend=${kind}${kind === "local" ? `, state=${state}` : ""}, scenario=${scenario})`);
 } catch (err) {
   console.error(`[bank] failed to start: ${err instanceof Error ? err.message : err}`);
   process.exit(1);
