@@ -11,6 +11,9 @@
  * - Convex's own _id is internal only; no table references another by v.id.
  * - Fields other lanes fill in later are v.optional.
  * - `devSeed: true` marks rows created by convex/devSeed.ts so they can be cleared.
+ * - entity/ruleHit/taintHit mirror packages/shared/src/types.ts field-for-field
+ *   (Entity, RuleHit, TaintHit) — that package is the source of truth for these
+ *   shapes, not this file.
  *
  * Queries/mutations each owner is expected to add in their own file:
  * - Anika G (convex/sessions.ts, convex/events.ts, convex/approvals.ts):
@@ -28,26 +31,25 @@ export const toolKind = v.union(v.literal("source"), v.literal("sink"), v.litera
 export const decision = v.union(v.literal("allow"), v.literal("block"), v.literal("ask"));
 export const backend = v.union(v.literal("local"), v.literal("nessie"));
 
-// Shapes below are our best guess until packages/shared/types.ts exists.
-// Anika G: if RuleHit/TaintHit/Entity differ there, tell Asmi and we'll align.
+// Mirrors packages/shared/src/types.ts (Entity, RuleHit, TaintHit) exactly —
+// that file is the source of truth; these values get written here verbatim.
 export const entity = v.object({
-  type: v.string(), // "email" | "url" | "account" | "amount" | "phone" | "path" | ...
+  kind: v.string(), // "email" | "url" | "account" | "amount" | "phone" | "path"
   value: v.string(),
-  start: v.optional(v.number()),
-  end: v.optional(v.number()),
+  start: v.number(),
+  end: v.number(),
 });
 
 export const ruleHit = v.object({
-  ruleId: v.string(),
-  effect: v.string(), // "deny" | "escalate" | "pass"
-  message: v.optional(v.string()),
+  rule: v.string(),
+  detail: v.string(),
 });
 
 export const taintHit = v.object({
-  argPath: v.string(), // e.g. "to_account"
+  argKey: v.string(), // e.g. "to_account"
   value: v.string(),
-  entityType: v.string(),
-  spanId: v.optional(v.string()),
+  entityKind: v.string(),
+  spanId: v.string(),
 });
 
 export const bill = v.object({
@@ -147,7 +149,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("approved"),
       v.literal("denied"),
-      v.literal("expired"),
+      v.literal("timed_out"),
     ),
     createdAt: v.number(),
     decidedAt: v.optional(v.number()),
