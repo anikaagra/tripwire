@@ -16,6 +16,7 @@
     "tripwire:deny": "pnpm --filter @tripwire/proxy tripwire:deny",
     "redteam": "pnpm --filter @tripwire/redteam start",
     "redteam:report": "pnpm --filter @tripwire/redteam report",
+    "guard:eval": "node --env-file-if-exists=.env.local --env-file-if-exists=.env --import tsx packages/guard/src/eval.ts",
     "build": "pnpm -r build",
     "test": "vitest run",
     "typecheck": "pnpm -r typecheck",
