@@ -5,20 +5,23 @@ mode: enforce # off | monitor | enforce
 proxy:
   stdio: true
   http:
-    port: 8787
+    port: 8787 # control API (session/intent registration), not MCP transport yet
 
 policyFile: ./tripwire.policy.yaml
 
 upstreams:
   - name: inbox
-    transport: stdio
-    command: pnpm
-    args: ["--filter", "@tripwire/mock-inbox", "start"]
+    entry: apps/mock-servers/inbox/src/index.ts
+    env:
+      TRIPWIRE_SCENARIO: bill-pay
+      TRIPWIRE_PAYLOAD: hidden
 
   - name: bank
-    transport: stdio
-    command: pnpm
-    args: ["--filter", "@tripwire/mock-bank", "start"]
+    entry: apps/mock-servers/bank/src/index.ts
 
 approvals:
-  timeoutMs: 60000
+  # Kept under the MCP SDK's default 60s per-request client timeout, so an
+  # "ask" always resolves to allow/block before the calling client gives up
+  # on the call first (confirmed by a smoke test: at 60000/60000 the client
+  # throws a request-timeout error a beat before the server-side block fires).
+  timeoutMs: 45000
