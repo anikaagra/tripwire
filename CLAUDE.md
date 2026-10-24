@@ -16,7 +16,7 @@ User asks: "Summarize my unread emails and pay the electricity bill." One email 
 - **Provenance tracker**: every source result is stored as an untrusted span; entities extracted (emails, URLs, 4–17 digit account-like runs, amounts, phones, paths); a sink argument entity found in a span but not in the intent = taint hit.
 - **Policy engine**: `tripwire.policy.yaml` classifies each tool as source / sink / neutral with a risk tier, our *trusted* description, and rules (amount limits, recipient allowlists, always_ask).
 - **Guard**: rules (<1 ms) → taint (<5 ms) → Claude Haiku judge (<1.5 s, temp 0, max 150 tokens). **Isolation rule: the judge sees only the user intent, tool name, our trusted description, and the arguments. Never untrusted spans.** Fails closed (error/timeout/unparseable → ask).
-- **Approvals**: an ask writes a pending row in Convex; proxy waits up to 60 s via subscription; timeout fails closed. `pnpm approve <id>` / `pnpm deny <id>` until the UI exists.
+- **Approvals**: an ask writes a pending row (local JSON file for now; Convex-backed later); proxy waits ~45 s (kept under the MCP SDK's 60 s default request timeout so the calling client never times out first); timeout fails closed. `pnpm tripwire:approve <id>` / `pnpm tripwire:deny <id>` until the UI exists — **not** `pnpm approve`, which pnpm's CLI reserves for `approve-builds` and will silently do the wrong thing.
 - **Bank server on Nessie**, **inbox server**, **agent harness** (Anthropic Messages API, Sonnet, up to 15 steps), **Red Team runner**, **Dashboard** (Next.js + Tailwind + shadcn, built by everyone H26–H32).
 
 ### Combination matrix (guard/decide)

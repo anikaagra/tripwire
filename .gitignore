@@ -9,6 +9,7 @@ dist/
 *.tsbuildinfo
 .tripwire-data
 .tripwire-dev
+.git-commit-msg.txt
 scenarios/nessie-ids.json
 !.env.example
 

@@ -43,6 +43,13 @@ class RecordingEventLog implements EventLog {
   }
 }
 
+// Pipeline defaults to @tripwire/guard's judge(), which calls the real
+// Anthropic API. Tests inject this fake instead so they stay offline and
+// deterministic — it mirrors the judge's own fail-closed "unclear" shape.
+async function fakeUnclearJudge() {
+  return { requested: "unclear" as const, reason: "test stub" };
+}
+
 function buildPipeline(opts: { approvalResolution?: ApprovalRecord["status"] } = {}) {
   const spanStore = new SpanStore();
   const sessions = new SessionStore();
@@ -53,6 +60,7 @@ function buildPipeline(opts: { approvalResolution?: ApprovalRecord["status"] } =
     spanStore,
     sessions,
     approvals,
+    judge: fakeUnclearJudge,
     eventLog,
     approvalTimeoutMs: 1000,
   });

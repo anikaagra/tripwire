@@ -4,9 +4,9 @@ import type { Mode } from "@tripwire/shared";
 
 export interface UpstreamConfig {
   name: string;
-  transport: "stdio";
-  command: string;
-  args: string[];
+  /** Path to the server's entry file, relative to the repo root (spawned via `node --import tsx <entry>`). */
+  entry: string;
+  env?: Record<string, string>;
 }
 
 export interface ProxyConfig {
@@ -32,9 +32,11 @@ export function loadProxyConfig(path: string): ProxyConfig {
 
   const upstreams = ((doc.upstreams ?? []) as Record<string, unknown>[]).map((u): UpstreamConfig => ({
     name: String(u.name),
-    transport: "stdio",
-    command: String(u.command),
-    args: Array.isArray(u.args) ? u.args.map(String) : [],
+    entry: String(u.entry),
+    env:
+      u.env && typeof u.env === "object"
+        ? Object.fromEntries(Object.entries(u.env as Record<string, unknown>).map(([k, v]) => [k, String(v)]))
+        : undefined,
   }));
 
   const approvalsSection = (doc.approvals ?? {}) as Record<string, unknown>;
@@ -45,6 +47,6 @@ export function loadProxyConfig(path: string): ProxyConfig {
     httpPort: typeof httpSection.port === "number" ? httpSection.port : undefined,
     policyFile: String(doc.policyFile ?? "./tripwire.policy.yaml"),
     upstreams,
-    approvalTimeoutMs: typeof approvalsSection.timeoutMs === "number" ? approvalsSection.timeoutMs : 60_000,
+    approvalTimeoutMs: typeof approvalsSection.timeoutMs === "number" ? approvalsSection.timeoutMs : 45_000,
   };
 }

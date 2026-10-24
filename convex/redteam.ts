@@ -21,7 +21,7 @@ export const startRun = mutation({
   handler: async (ctx, { runId, startedAt, backend }) => {
     const existing = await ctx.db
       .query("redteamRuns")
-      .withIndex("by_runId", (q) => q.eq("runId", runId))
+      .withIndex("by_record_id", (q) => q.eq("id", runId))
       .unique();
     if (existing) {
       await ctx.db.patch(existing._id, { startedAt, backend, status: "running", finishedAt: undefined, metrics: undefined });
@@ -33,7 +33,7 @@ export const startRun = mutation({
       await Promise.all(prior.map((a) => ctx.db.delete(a._id)));
       return existing._id;
     }
-    return await ctx.db.insert("redteamRuns", { runId, startedAt, backend, status: "running" });
+    return await ctx.db.insert("redteamRuns", { id: runId, startedAt, backend, status: "running" });
   },
 });
 
@@ -41,6 +41,7 @@ export const startRun = mutation({
 export const recordAttack = mutation({
   args: {
     runId: v.string(),
+    attackId: v.string(), // the suite's attack id (e.g. "atk-01-...")
     carrier: v.string(),
     technique: v.string(),
     goal: v.string(),
@@ -51,6 +52,7 @@ export const recordAttack = mutation({
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("attacks", {
+      id: `${args.runId}:${args.attackId}`,
       runId: args.runId,
       carrier: args.carrier,
       technique: args.technique,
@@ -73,7 +75,7 @@ export const finishRun = mutation({
   handler: async (ctx, { runId, status, metrics }) => {
     const run = await ctx.db
       .query("redteamRuns")
-      .withIndex("by_runId", (q) => q.eq("runId", runId))
+      .withIndex("by_record_id", (q) => q.eq("id", runId))
       .unique();
     if (!run) throw new Error(`redteamRuns: no run with id '${runId}'`);
     await ctx.db.patch(run._id, { status, finishedAt: Date.now(), metrics });

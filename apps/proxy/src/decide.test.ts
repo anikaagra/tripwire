@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GuardVerdict } from "@tripwire/shared";
-import { decide } from "./guardStub.js";
+import { decide } from "./decide.js";
 
 function verdict(requested: GuardVerdict["requested"]): GuardVerdict {
   return { requested, reason: "test reason" };

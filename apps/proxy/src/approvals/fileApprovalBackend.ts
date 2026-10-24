@@ -6,7 +6,7 @@ import type { ApprovalBackend } from "./approvalBackend.js";
 const POLL_INTERVAL_MS = 250;
 
 /**
- * Approvals persisted to a JSON file so `pnpm approve <id>` / `pnpm deny <id>`
+ * Approvals persisted to a JSON file so `pnpm tripwire:approve <id>` / `pnpm tripwire:deny <id>`
  * (a separate process) can flip a pending record while the proxy's
  * waitForDecision polls for the change. Good enough until Convex's
  * subscription-based backend replaces it.

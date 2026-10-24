@@ -48,6 +48,7 @@ export function createConvexSink(): RedteamSink {
       try {
         await client.mutation(recordAttackRef, {
           runId,
+          attackId: a.id,
           carrier: a.carrier,
           technique: a.technique,
           goal: a.goal,

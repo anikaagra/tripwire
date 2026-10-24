@@ -109,7 +109,17 @@ function attackEnv(attack: AttackSeed | undefined): Record<string, string> {
 }
 
 async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
-  const env = cleanEnv({ TRIPWIRE_SCENARIO: opts.scenario, ...attackEnv(opts.attack) });
+  // Env for the mock servers:
+  //   inbox reads TRIPWIRE_SCENARIO; the bank reads BANK_SCENARIO / BANK_STATE / BANK_BACKEND.
+  //   BANK_STATE=memory gives each run a private in-process bank (no Convex dependency and
+  //   safe for the red team's parallel runs). Attack seeds (TRIPWIRE_*) feed both servers.
+  const env = cleanEnv({
+    TRIPWIRE_SCENARIO: opts.scenario,
+    BANK_SCENARIO: opts.scenario,
+    BANK_STATE: "memory",
+    BANK_BACKEND: "local",
+    ...attackEnv(opts.attack),
+  });
 
   if (opts.mode === "enforce") {
     // Connect through the proxy, which itself spawns the mock servers as upstreams.

@@ -12,8 +12,8 @@
     "inbox": "tsx apps/mock-servers/inbox/src/index.ts",
     "bank": "tsx apps/mock-servers/bank/src/index.ts",
     "proxy": "pnpm --filter @tripwire/proxy start",
-    "approve": "pnpm --filter @tripwire/proxy approve",
-    "deny": "pnpm --filter @tripwire/proxy deny",
+    "tripwire:approve": "pnpm --filter @tripwire/proxy tripwire:approve",
+    "tripwire:deny": "pnpm --filter @tripwire/proxy tripwire:deny",
     "redteam": "pnpm --filter @tripwire/redteam start",
     "redteam:report": "pnpm --filter @tripwire/redteam report",
     "build": "pnpm -r build",
@@ -22,7 +22,11 @@
     "convex:dev": "convex dev",
     "convex:typecheck": "tsc --noEmit -p convex",
     "seed:dev": "convex run devSeed:seed",
-    "seed:clear": "convex run devSeed:clear"
+    "seed:clear": "convex run devSeed:clear",
+    "bank:start": "pnpm --silent --filter @tripwire/mock-bank start",
+    "bank:control": "pnpm --silent --filter @tripwire/mock-bank control",
+    "bank:test": "pnpm --filter @tripwire/mock-bank test",
+    "bank:typecheck": "pnpm --filter @tripwire/mock-bank typecheck"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
