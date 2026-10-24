@@ -1,0 +1,20 @@
+{
+  "name": "tripwire",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "scripts": {
+    "proxy": "pnpm --filter @tripwire/proxy start",
+    "approve": "pnpm --filter @tripwire/proxy approve",
+    "deny": "pnpm --filter @tripwire/proxy deny",
+    "build": "pnpm -r build",
+    "test": "vitest run",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@tripwire/provenance",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tripwire/shared": "workspace:*"
+  }
+}

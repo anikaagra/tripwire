@@ -1,0 +1,22 @@
+{
+  "name": "@tripwire/proxy",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "dev:echo-upstream": "tsx src/dev/echoUpstream.ts",
+    "approve": "tsx src/cli/approve.ts",
+    "deny": "tsx src/cli/deny.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tripwire/shared": "workspace:*",
+    "@tripwire/provenance": "workspace:*",
+    "@tripwire/policy": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.9.0",
+    "yaml": "^2.6.1",
+    "zod": "^3.24.1"
+  }
+}
