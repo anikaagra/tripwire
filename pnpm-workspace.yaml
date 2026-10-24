@@ -1,0 +1,8 @@
+packages:
+  - "apps/*"
+  - "apps/mock-servers/*"
+  - "packages/*"
+
+# Convex bundles functions with esbuild, which needs its install script.
+allowBuilds:
+  esbuild: true

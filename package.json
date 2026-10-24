@@ -1,0 +1,20 @@
+{
+  "name": "tripwire",
+  "private": true,
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "convex:dev": "convex dev",
+    "convex:typecheck": "tsc --noEmit -p convex",
+    "seed:dev": "convex run devSeed:seed",
+    "seed:clear": "convex run devSeed:clear"
+  },
+  "dependencies": {
+    "convex": "1.48.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
