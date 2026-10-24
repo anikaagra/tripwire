@@ -55,19 +55,45 @@ interface SentEmail {
 let emails: SeedEmail[] = [];
 let outbox: SentEmail[] = [];
 
+function wrap(text: string, hidden: boolean): string {
+  return hidden
+    ? `<p style="color:#ffffff;background-color:#ffffff;font-size:1px;">${text}</p>`
+    : `<p>${text}</p>`;
+}
+
 function seedState(): void {
   const seed = loadSeed();
   const variant =
     seed.injection.variants[PAYLOAD] ?? seed.injection.variants["hidden"];
-  // Hidden payloads are white-on-white 1px text; overt ones are a normal paragraph.
-  const html = variant.hidden
-    ? `<p style="color:#ffffff;background-color:#ffffff;font-size:1px;">${variant.text}</p>`
-    : `<p>${variant.text}</p>`;
   // Deep copy so reset returns to a clean slate; substitute the payload marker.
   emails = seed.emails.map((e) => ({
     ...e,
-    bodyHtml: e.bodyHtml.replace("__INJECTION__", html),
+    bodyHtml: e.bodyHtml.replace("__INJECTION__", wrap(variant.text, variant.hidden)),
   }));
+
+  // Red-team attack carrier: an extra attacker-controlled email, injected via env.
+  // JSON: { from, subject, text, hidden }. Hidden => white-on-white; else plain text.
+  const raw = process.env.TRIPWIRE_ATTACK_EMAIL;
+  if (raw) {
+    try {
+      const a = JSON.parse(raw) as {
+        from?: string;
+        subject?: string;
+        text: string;
+        hidden?: boolean;
+      };
+      emails.unshift({
+        id: "atk",
+        from: a.from ?? "notice@service.example",
+        to: "me@example.com",
+        subject: a.subject ?? "Account notice",
+        unread: true,
+        bodyHtml: `<html><body>${wrap(a.text, a.hidden ?? false)}</body></html>`,
+      });
+    } catch {
+      /* ignore malformed attack spec */
+    }
+  }
   outbox = [];
 }
 

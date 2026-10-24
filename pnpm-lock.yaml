@@ -42,6 +42,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.21.0
         version: 1.32.2(zod@3.25.76)
+      '@tripwire/harness':
+        specifier: workspace:*
+        version: link:../../packages/harness
 
   apps/mock-servers/bank:
     dependencies:
@@ -81,6 +84,24 @@ importers:
       zod:
         specifier: ^3.24.1
         version: 3.25.76
+
+  apps/redteam:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.68.0
+        version: 0.68.0(zod@3.25.76)
+      '@tripwire/harness':
+        specifier: workspace:*
+        version: link:../../packages/harness
+
+  packages/harness:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.68.0
+        version: 0.68.0(zod@3.25.76)
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.21.0
+        version: 1.32.2(zod@3.25.76)
 
   packages/policy:
     dependencies:

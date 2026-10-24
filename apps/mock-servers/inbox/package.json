@@ -1,5 +1,5 @@
 {
-  "name": "@tripwire/inbox",
+  "name": "@tripwire/mock-inbox",
   "version": "0.1.0",
   "private": true,
   "type": "module",

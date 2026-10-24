@@ -11,3 +11,6 @@ dist/
 .tripwire-dev
 scenarios/nessie-ids.json
 !.env.example
+
+# Red Team run artifacts
+apps/redteam/results.json
