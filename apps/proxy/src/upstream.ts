@@ -4,6 +4,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { qualifiedToolName } from "@tripwire/shared";
 import type { UpstreamConfig } from "./config.js";
 import type { McpAnnotations } from "@tripwire/policy";
+import { scanToolDescription } from "@tripwire/policy";
 
 export interface RegisteredTool {
   qualifiedName: string;
@@ -13,6 +14,8 @@ export interface RegisteredTool {
   inputSchema: Record<string, unknown>;
   annotations?: McpAnnotations;
   client: Client;
+  /** Set when scanToolDescription flagged this tool's description/schema as possibly poisoned. Visibility only — see toolDescriptionScan.ts. */
+  descriptionWarnings?: string[];
 }
 
 /** Drops undefined entries so a spawned child inherits a clean env plus our overrides. */
@@ -48,6 +51,17 @@ export async function connectUpstreams(
     for (const tool of tools) {
       if (tool.name === "reset") continue;
       const qualifiedName = qualifiedToolName(upstream.name, tool.name);
+
+      const scan = scanToolDescription(qualifiedName, tool.description ?? "", tool.inputSchema);
+      if (scan.suspicious) {
+        console.error(
+          `[tripwire] WARNING: ${qualifiedName}'s description looks like it may be poisoned ` +
+            `(${scan.reasons.filter((r) => !r.startsWith("tool:")).join(", ")}). ` +
+            `This does not affect the guard — it always uses our trustedDescription from ` +
+            `tripwire.policy.yaml, never the upstream server's — but review this tool before adding it there.`
+        );
+      }
+
       registry.set(qualifiedName, {
         qualifiedName,
         bareName: tool.name,
@@ -56,6 +70,7 @@ export async function connectUpstreams(
         inputSchema: tool.inputSchema as Record<string, unknown>,
         annotations: tool.annotations as McpAnnotations | undefined,
         client,
+        descriptionWarnings: scan.suspicious ? scan.reasons : undefined,
       });
     }
   }
