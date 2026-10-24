@@ -16,6 +16,7 @@
     "@tripwire/policy": "workspace:*",
     "@tripwire/guard": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.21.0",
+    "convex": "1.48.0",
     "yaml": "^2.6.1"
   }
 }

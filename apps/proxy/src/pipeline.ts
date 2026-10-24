@@ -13,6 +13,8 @@ import type { PolicyResolver } from "./policyResolver.js";
 import type { SessionStore } from "./sessions.js";
 import type { EventLog } from "./eventLog.js";
 import type { ApprovalBackend } from "./approvals/approvalBackend.js";
+import type { SpanLog } from "./spanLog.js";
+import { NoopSpanLog } from "./spanLog.js";
 import { judge as guardJudge } from "@tripwire/guard";
 import { decide as localDecide } from "./decide.js";
 
@@ -23,6 +25,7 @@ export interface PipelineDeps {
   approvals: ApprovalBackend;
   eventLog: EventLog;
   approvalTimeoutMs: number;
+  spanLog?: SpanLog;
   judge?: (input: GuardInput) => Promise<GuardVerdict>;
   decide?: (input: DecideInput) => FinalDecision;
   now?: () => number;
@@ -48,15 +51,17 @@ let eventCounter = 0;
 export class Pipeline {
   private readonly judge: (input: GuardInput) => Promise<GuardVerdict>;
   private readonly decideFn: (input: DecideInput) => FinalDecision;
+  private readonly spanLog: SpanLog;
   private readonly now: () => number;
 
   constructor(private readonly deps: PipelineDeps) {
     this.judge = deps.judge ?? guardJudge;
     this.decideFn = deps.decide ?? localDecide;
+    this.spanLog = deps.spanLog ?? new NoopSpanLog();
     this.now = deps.now ?? Date.now;
   }
 
-  recordSourceResult(input: {
+  async recordSourceResult(input: {
     sessionId: string;
     server: string;
     tool: string;
@@ -64,7 +69,9 @@ export class Pipeline {
     text: string;
     rawHtml?: string;
   }) {
-    return this.deps.spanStore.addSpan(input);
+    const span = this.deps.spanStore.addSpan(input);
+    await this.spanLog.record(span);
+    return span;
   }
 
   async decideSinkCall(input: {
@@ -100,7 +107,10 @@ export class Pipeline {
 
     let decision = final.decision;
     let reason = final.reason;
-    const eventId = `evt_${eventCounter++}`;
+    // Prefixed with sessionId (a UUID per proxy process) so eventIds stay
+    // unique across the parallel processes the Red Team runner spawns —
+    // a shared Convex deployment can't tolerate a bare per-process counter.
+    const eventId = `${input.sessionId}_evt_${eventCounter++}`;
 
     if (decision === "ask" && session.mode === "enforce") {
       const approval = await this.deps.approvals.createPending(eventId);
