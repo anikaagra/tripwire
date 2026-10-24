@@ -14,7 +14,7 @@ const finishRunRef = makeFunctionReference<"mutation">("redteam:finishRun");
 
 export interface RedteamSink {
   active: boolean;
-  startRun(runId: string): Promise<void>;
+  startRun(runId: string, backend: "local" | "nessie"): Promise<void>;
   recordAttack(runId: string, mode: string, a: AttackResult): Promise<void>;
   finishRun(runId: string, metrics: unknown): Promise<void>;
 }
@@ -37,9 +37,9 @@ export function createConvexSink(): RedteamSink {
 
   return {
     active: true,
-    async startRun(runId) {
+    async startRun(runId, backend) {
       try {
-        await client.mutation(startRunRef, { runId, startedAt: Date.now(), backend: "local" });
+        await client.mutation(startRunRef, { runId, startedAt: Date.now(), backend });
       } catch (err) {
         warn("startRun", err);
       }
