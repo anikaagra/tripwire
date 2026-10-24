@@ -28,14 +28,14 @@ async function call(name: string, args: Record<string, unknown> = {}) {
 describe("bank MCP tools", () => {
   it("exposes exactly the frozen tools with the right args and annotations", async () => {
     const { tools } = await client.listTools();
-    const byName = Object.fromEntries(tools.map((t) => [t.name, t]));
+    const byName = Object.fromEntries(tools.map((t) => [t.name, t])) as Record<string, (typeof tools)[number]>;
     expect(Object.keys(byName).sort()).toEqual(["get_balance", "list_bills", "pay_bill", "transfer"]);
-    expect(Object.keys(byName.pay_bill.inputSchema.properties ?? {})).toEqual(["bill_id"]);
-    expect(Object.keys(byName.transfer.inputSchema.properties ?? {}).sort()).toEqual(["amount", "memo", "to_account"]);
-    expect(byName.get_balance.annotations?.readOnlyHint).toBe(true);
-    expect(byName.list_bills.annotations?.readOnlyHint).toBe(true);
-    expect(byName.pay_bill.annotations?.destructiveHint).toBe(true);
-    expect(byName.transfer.annotations?.destructiveHint).toBe(true);
+    expect(Object.keys(byName.pay_bill!.inputSchema.properties ?? {})).toEqual(["bill_id"]);
+    expect(Object.keys(byName.transfer!.inputSchema.properties ?? {}).sort()).toEqual(["amount", "memo", "to_account"]);
+    expect(byName.get_balance!.annotations?.readOnlyHint).toBe(true);
+    expect(byName.list_bills!.annotations?.readOnlyHint).toBe(true);
+    expect(byName.pay_bill!.annotations?.destructiveHint).toBe(true);
+    expect(byName.transfer!.annotations?.destructiveHint).toBe(true);
   });
 
   it("formats every output in dollars, never raw cents", async () => {
@@ -60,7 +60,7 @@ describe("bank MCP tools", () => {
   it("accepts to_account sent as a number and still advertises a string", async () => {
     const { tools } = await client.listTools();
     const t = tools.find((x) => x.name === "transfer")!;
-    expect((t.inputSchema.properties as Record<string, { type?: string }>).to_account.type).toBe("string");
+    expect((t.inputSchema.properties as Record<string, { type?: string }>).to_account!.type).toBe("string");
     expect(t.inputSchema.required).toEqual(expect.arrayContaining(["to_account", "amount", "memo"]));
     expect((await call("transfer", { to_account: 4417, amount: 2000, memo: "" })).text).toBe(
       "Sent $2,000.00 to 4417. Balance: $1,200.00",

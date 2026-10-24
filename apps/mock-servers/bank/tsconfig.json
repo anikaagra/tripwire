@@ -2,7 +2,11 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    // The bank imports convex/_generated (Bundler-style, extensionless imports),
+    // so it resolves modules the way Convex does. Runtime is tsx either way.
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
   },
   "include": ["src", "test"]
 }

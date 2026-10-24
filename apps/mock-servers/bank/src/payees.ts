@@ -16,13 +16,13 @@ export function resolvePayee(input: string, payees: Payee[]): Payee {
   const byName = payees.filter(
     (p) => p.nickname.toLowerCase() === lower || p.name.toLowerCase() === lower,
   );
-  if (byName.length === 1) return byName[0];
+  if (byName.length === 1) return byName[0]!;
 
   const digits = raw.replace(/\D/g, "");
   if (digits.length >= 4) {
     const last4 = digits.slice(-4);
     const byLast4 = payees.filter((p) => p.last4 === last4);
-    if (byLast4.length === 1) return byLast4[0];
+    if (byLast4.length === 1) return byLast4[0]!;
     if (byLast4.length > 1) {
       throw new BankError(`"${raw}" matches more than one payee. Use the payee's nickname.`);
     }

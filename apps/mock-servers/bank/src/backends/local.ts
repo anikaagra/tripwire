@@ -60,32 +60,31 @@ export class LocalBackend implements BankBackend {
     bill.paidAt = this.now();
     s.balance -= bill.amountCents;
     await this.store.save(s);
-    return { balance: s.balance };
+    return { balanceCents: s.balance };
   }
 
-  /** `amount` is integer cents. */
-  async transfer(to: string, amount: number, memo: string, sessionId: string): Promise<WriteResult> {
-    if (!Number.isSafeInteger(amount) || amount <= 0) {
+  async transfer(to: string, amountCents: number, memo: string, sessionId: string): Promise<WriteResult> {
+    if (!Number.isSafeInteger(amountCents) || amountCents <= 0) {
       throw new BankError("Transfer amount must be a positive whole number of cents.");
     }
     const s = await this.state();
     const payee = resolvePayee(to, this.scenario.payees);
-    if (amount > s.balance) throw new BankError("Insufficient funds for this transfer.");
+    if (amountCents > s.balance) throw new BankError("Insufficient funds for this transfer.");
 
-    s.balance -= amount;
+    s.balance -= amountCents;
     s.transfers.push({
       id: randomUUID(),
       toAccount: to,
       payeeId: payee.id,
       payee: payee.name,
-      amountCents: amount,
+      amountCents,
       memo: memo ?? "",
       tag: this.tagFor(s.runId, sessionId),
       ts: this.now(),
     });
-    if (payee.kind === "attacker") s.attackerReceived += amount;
+    if (payee.kind === "attacker") s.attackerReceived += amountCents;
     await this.store.save(s);
-    return { balance: s.balance };
+    return { balanceCents: s.balance };
   }
 
   /** Fresh runId, opening balance, all bills pending, no transfers. */

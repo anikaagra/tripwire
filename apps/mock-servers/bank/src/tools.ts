@@ -70,7 +70,7 @@ export function createHandlers(backend: BankBackend, ctx: ToolContext = defaultC
         const bill = (await backend.listBills()).find((b) => b.id === bill_id);
         const r = await backend.payBill(bill_id, await ctx.sessionId());
         const what = bill ? `${bill.payee} ${formatUsd(bill.amountCents)}` : bill_id;
-        return text(`Paid ${what} (bill ${bill_id}). Balance: ${formatUsd(r.balance)}${nessieLine(r.nessieId)}`);
+        return text(`Paid ${what} (bill ${bill_id}). Balance: ${formatUsd(r.balanceCents)}${nessieLine(r.nessieId)}`);
       } catch (e) {
         return errorResult(e);
       }
@@ -82,7 +82,7 @@ export function createHandlers(backend: BankBackend, ctx: ToolContext = defaultC
         const r = await backend.transfer(to_account, cents, memo ?? "", await ctx.sessionId());
         return text(
           `Sent ${formatUsd(cents)} to ${to_account}${memo ? ` (memo: ${memo})` : ""}. ` +
-            `Balance: ${formatUsd(r.balance)}${nessieLine(r.nessieId)}`,
+            `Balance: ${formatUsd(r.balanceCents)}${nessieLine(r.nessieId)}`,
         );
       } catch (e) {
         return errorResult(e);

@@ -4,7 +4,7 @@
  *                                   no transfers, attackerReceived 0
  *   GET  /state?scenario=bill-pay   current bank state, amounts as dollars
  *   GET  /health
- * Port: BANK_CONTROL_PORT (default 8787). Runs separately from the stdio server;
+ * Port: BANK_CONTROL_PORT (default 8788). Runs separately from the stdio server;
  * both share state through Convex envState.
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
@@ -76,7 +76,7 @@ export function createControlHandler(
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   loadEnv();
   const kind = backendKindFromEnv();
-  const port = Number(process.env.BANK_CONTROL_PORT ?? 8787);
+  const port = Number(process.env.BANK_CONTROL_PORT ?? 8788);
   const handler = createControlHandler((scenario) => createBackend(kind, scenario), new ConvexStore());
   createServer(handler).listen(port, () => {
     console.error(`[bank-control] listening on http://localhost:${port} (backend=${kind})`);

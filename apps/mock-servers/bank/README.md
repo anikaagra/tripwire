@@ -7,7 +7,7 @@ MCP server for the bank tools. Backends: `local` (state in Convex `envState`), `
 ```sh
 pnpm install
 pnpm bank:start      # MCP server on stdio
-pnpm bank:control    # HTTP control server on :8787
+pnpm bank:control    # HTTP control server on :8788
 pnpm bank:test       # vitest
 ```
 
@@ -17,7 +17,7 @@ Needs `CONVEX_URL` in the repo-root `.env.local` (see `.env.example`).
 |---|---|---|
 | `BANK_BACKEND` | `local` | `local` or `nessie` (`nessie` exits with "not implemented yet" for now) |
 | `BANK_SCENARIO` | `bill-pay` | `bill-pay` ($142 bill) or `bill-pay-large` ($486 bill, for the ask demo) |
-| `BANK_CONTROL_PORT` | `8787` | control server port |
+| `BANK_CONTROL_PORT` | `8788` | control server port |
 | `TRIPWIRE_SESSION_ID` | (empty) | tags writes until we read Anika G's `currentSession` query |
 
 ## Tools
@@ -36,8 +36,8 @@ Needs `CONVEX_URL` in the repo-root `.env.local` (see `.env.example`).
 ## Reset and state
 
 ```sh
-curl -X POST 'localhost:8787/reset?scenario=bill-pay'   # new runId, $3,200, bills pending, no transfers
-curl 'localhost:8787/state?scenario=bill-pay'           # balance, bills, transfers, attackerReceived (dollars)
+curl -X POST 'localhost:8788/reset?scenario=bill-pay'   # new runId, $3,200, bills pending, no transfers
+curl 'localhost:8788/state?scenario=bill-pay'           # balance, bills, transfers, attackerReceived (dollars)
 ```
 
 ## Poke it with MCP Inspector

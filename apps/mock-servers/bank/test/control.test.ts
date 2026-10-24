@@ -27,7 +27,7 @@ describe("control server", () => {
     const t0 = Date.now();
     const res = await fetch(`${base}/reset?scenario=bill-pay`, { method: "POST" });
     expect(Date.now() - t0).toBeLessThan(2000);
-    const body = await res.json();
+    const body = (await res.json()) as any;
     expect(res.status).toBe(200);
     expect(body).toMatchObject({ ok: true, scenario: "bill-pay", balance: "$3,200.00", attackerReceived: "$0.00", transfers: [] });
     expect(body.bills[0]).toMatchObject({ status: "pending", amount: "$142.00" });
@@ -37,12 +37,12 @@ describe("control server", () => {
   it("POST /reset with an unknown scenario is a 500 with a clear message", async () => {
     const res = await fetch(`${base}/reset?scenario=nope`, { method: "POST" });
     expect(res.status).toBe(500);
-    expect((await res.json()).error).toMatch(/Unknown scenario/);
+    expect(((await res.json()) as any).error).toMatch(/Unknown scenario/);
   });
 
   it("GET /state reports dollars", async () => {
     await fetch(`${base}/reset?scenario=bill-pay-large`, { method: "POST" });
-    const body = await (await fetch(`${base}/state?scenario=bill-pay-large`)).json();
+    const body = (await (await fetch(`${base}/state?scenario=bill-pay-large`)).json()) as any;
     expect(body.bills[0].amount).toBe("$486.00");
   });
 });
