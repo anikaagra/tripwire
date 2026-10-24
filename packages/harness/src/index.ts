@@ -53,6 +53,12 @@ export interface RunOptions {
   verbose?: boolean;
   /** Label for verbose logging (e.g. the attack id or run index). */
   label?: string;
+  /**
+   * Bank backend for this run (red team only). Unset = today's behavior.
+   * "nessie" also sets BANK_RESET_ON_START=1 so each run starts on a fresh runId
+   * with its attack seeds applied; run these sequentially (shared accounts).
+   */
+  bankBackend?: "local" | "nessie";
 }
 
 export interface ToolCallRecord {
@@ -139,11 +145,15 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
   //   inbox reads TRIPWIRE_SCENARIO; the bank reads BANK_SCENARIO / BANK_STATE / BANK_BACKEND.
   //   BANK_STATE=memory gives each run a private in-process bank (no Convex dependency and
   //   safe for the red team's parallel runs). Attack seeds (TRIPWIRE_*) feed both servers.
+  const bankOverride: Record<string, string> = opts.bankBackend
+    ? { BANK_BACKEND: opts.bankBackend, ...(opts.bankBackend === "nessie" ? { BANK_RESET_ON_START: "1" } : {}) }
+    : {};
   const env = cleanEnv({
     TRIPWIRE_SCENARIO: opts.scenario,
     BANK_SCENARIO: opts.scenario,
-    BANK_STATE: "memory",
+    BANK_STATE: "memory", // local backend only; Nessie ignores it
     BANK_BACKEND: "local",
+    ...bankOverride,
     ...attackEnv(opts.attack),
   });
 
@@ -171,14 +181,16 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
       process.execPath,
       ["--import", "tsx", proxyMain],
       cleanEnv({
+        BANK_SCENARIO: opts.scenario,
+        BANK_STATE: "memory",
+        BANK_BACKEND: "local",
+        ...bankOverride, // lets --backend nessie override the local defaults
         ...attackEnv(opts.attack),
         TRIPWIRE_MODE: "enforce",
         TRIPWIRE_SESSION_ID: sessionId,
         TRIPWIRE_CONTROL_PORT: String(controlPort),
-        BANK_SCENARIO: opts.scenario,
-        BANK_STATE: "memory",
-        BANK_BACKEND: "local",
       }),
+
     );
     // Register the user's intent on the control API so the guard can tell requested
     // actions from planted ones. The control server is listening by the time the MCP

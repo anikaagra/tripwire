@@ -16,6 +16,7 @@
     "tripwire:deny": "pnpm --filter @tripwire/proxy tripwire:deny",
     "redteam": "pnpm --filter @tripwire/redteam start",
     "redteam:report": "pnpm --filter @tripwire/redteam report",
+    "guard:eval": "node --env-file-if-exists=.env.local --env-file-if-exists=.env --import tsx packages/guard/src/eval.ts",
     "build": "pnpm -r build",
     "test": "vitest run",
     "typecheck": "pnpm -r typecheck",
@@ -26,7 +27,10 @@
     "bank:start": "pnpm --silent --filter @tripwire/mock-bank start",
     "bank:control": "pnpm --silent --filter @tripwire/mock-bank control",
     "bank:test": "pnpm --filter @tripwire/mock-bank test",
-    "bank:typecheck": "pnpm --filter @tripwire/mock-bank typecheck"
+    "bank:typecheck": "pnpm --filter @tripwire/mock-bank typecheck",
+    "nessie:verify": "pnpm --silent --filter @tripwire/mock-bank nessie:verify",
+    "nessie:seed": "pnpm --silent --filter @tripwire/mock-bank nessie:seed",
+    "bank:reset": "pnpm --silent --filter @tripwire/mock-bank reset"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

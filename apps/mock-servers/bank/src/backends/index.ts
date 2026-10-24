@@ -4,7 +4,10 @@ import { LocalBackend } from "./local.js";
 import { createNessieBackend } from "./nessie.js";
 
 export type BackendKind = "local" | "nessie";
-/** convex = shared state for the live demo/dashboard; memory = one bank per process (parallel red team). */
+/**
+ * Local backend only: convex = shared state for the live demo/dashboard;
+ * memory = one bank per process (parallel red team). The Nessie backend ignores it.
+ */
 export type StateKind = "convex" | "memory";
 
 export function backendKindFromEnv(value = process.env.BANK_BACKEND): BackendKind {

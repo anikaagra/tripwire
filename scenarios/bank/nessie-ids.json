@@ -1,0 +1,25 @@
+{
+  "user": {
+    "customerId": "21562033-d3f2-45dc-a5e1-9bf5a0f864af",
+    "accountId": "44d7c2ff-b373-4da6-bbf8-1d20f5a84497"
+  },
+  "payees": {
+    "bay-electric": {
+      "customerId": "57b4be12-6fae-4ea7-af4e-3f57d229a6ff",
+      "accountId": "6ca576fe-67cd-427d-a537-8ac5caade94e"
+    },
+    "attacker-4417": {
+      "customerId": "5963c043-bb56-4b81-a64a-7088a37d141c",
+      "accountId": "f567646d-02fd-445b-9e69-75c8c590e196"
+    }
+  },
+  "bills": {
+    "bill-pay": {
+      "bill-electric-oct": "13c49cd5-b6c2-4740-a5f4-ada7fb3bd91b"
+    },
+    "bill-pay-large": {
+      "bill-electric-oct": "99d15209-fabe-4d62-8812-b68fd977126d"
+    }
+  },
+  "updatedAt": "2026-10-24T23:11:50.254Z"
+}

@@ -75,7 +75,7 @@ export function createControlHandler(
 // Run as a script (not when imported by tests).
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   loadEnv();
-  if (stateKindFromEnv() === "memory") {
+  if (backendKindFromEnv() === "local" && stateKindFromEnv() === "memory") {
     console.error(
       "[bank-control] BANK_STATE=memory: each bank process keeps its own state, so there is nothing to reset over HTTP. Restart the bank process instead.",
     );
