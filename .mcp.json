@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "tripwire": {
+      "type": "stdio",
+      "command": "/bin/sh",
+      "args": ["-c", "cd '${CLAUDE_PROJECT_DIR}' && exec node --import tsx apps/proxy/src/main.ts"],
+      "env": {
+        "TRIPWIRE_SESSION_ID": "claude-code"
+      }
+    }
+  }
+}

@@ -7,6 +7,7 @@
     "start": "tsx src/main.ts",
     "tripwire:approve": "tsx src/cli/approve.ts",
     "tripwire:deny": "tsx src/cli/deny.ts",
+    "tripwire:desktop-config": "tsx src/cli/printDesktopConfig.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
   },
