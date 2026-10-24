@@ -37,7 +37,7 @@ interface InjectionVariant {
 }
 interface Seed {
   emails: SeedEmail[];
-  injection: { variants: Record<string, InjectionVariant> };
+  injection?: { variants: Record<string, InjectionVariant> };
 }
 
 function loadSeed(): Seed {
@@ -63,12 +63,14 @@ function wrap(text: string, hidden: boolean): string {
 
 function seedState(): void {
   const seed = loadSeed();
-  const variant =
-    seed.injection.variants[PAYLOAD] ?? seed.injection.variants["hidden"];
+  const variants = seed.injection?.variants ?? {};
+  const variant = variants[PAYLOAD] ?? variants["hidden"];
   // Deep copy so reset returns to a clean slate; substitute the payload marker.
+  // A scenario with no injection (a clean/benign scenario) just drops the marker.
+  const injectedHtml = variant ? wrap(variant.text, variant.hidden) : "";
   emails = seed.emails.map((e) => ({
     ...e,
-    bodyHtml: e.bodyHtml.replace("__INJECTION__", wrap(variant.text, variant.hidden)),
+    bodyHtml: e.bodyHtml.replace("__INJECTION__", injectedHtml),
   }));
 
   // Red-team attack carrier: an extra attacker-controlled email, injected via env.
