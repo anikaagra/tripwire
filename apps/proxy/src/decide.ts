@@ -1,17 +1,11 @@
-import type { DecideInput, FinalDecision, GuardInput, GuardVerdict } from "@tripwire/shared";
+import type { DecideInput, FinalDecision } from "@tripwire/shared";
 
 /**
- * TEMPORARY. Nila owns packages/guard (judge + decide); this file exists only
- * so the pipeline is end-to-end testable before that package lands. Delete
- * this file and switch pipeline.ts's import to "@tripwire/guard" once it does
- * — same two function signatures, so it's a one-line swap.
+ * TEMPORARY. judge() now comes from Nila's @tripwire/guard (wired in
+ * pipeline.ts); decide() is still local here because that package hasn't
+ * published its own yet. Delete this file and switch pipeline.ts's decide
+ * import to "@tripwire/guard" once it does — same signature.
  */
-export async function stubJudge(_input: GuardInput): Promise<GuardVerdict> {
-  return {
-    requested: "unclear",
-    reason: "Guard judge not yet wired (stub) — treating as unclear until @tripwire/guard lands.",
-  };
-}
 
 /**
  * The matrix leaves escalate+taint-hit+judge-"yes" unstated. This follows the pattern of every

@@ -1,5 +1,6 @@
 #!/usr/bin/env tsx
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -19,6 +20,24 @@ import { startControlApi } from "./controlApi.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../..");
 const DATA_DIR = resolve(REPO_ROOT, ".tripwire-data");
+
+// Minimal .env loader (same approach as apps/agent) so ANTHROPIC_API_KEY
+// reaches @tripwire/guard's judge() when the proxy is run directly.
+function loadDotEnv(): void {
+  try {
+    const text = readFileSync(resolve(REPO_ROOT, ".env"), "utf-8");
+    for (const line of text.split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (!m) continue;
+      let val = m[2]!;
+      if (/^".*"$/.test(val) || /^'.*'$/.test(val)) val = val.slice(1, -1);
+      if (process.env[m[1]!] === undefined) process.env[m[1]!] = val;
+    }
+  } catch {
+    // no .env; rely on the real environment
+  }
+}
+loadDotEnv();
 
 async function main(): Promise<void> {
   const configPath = process.env.TRIPWIRE_CONFIG ?? resolve(REPO_ROOT, "tripwire.config.yaml");

@@ -13,7 +13,8 @@ import type { PolicyResolver } from "./policyResolver.js";
 import type { SessionStore } from "./sessions.js";
 import type { EventLog } from "./eventLog.js";
 import type { ApprovalBackend } from "./approvals/approvalBackend.js";
-import { stubJudge, decide as stubDecide } from "./guardStub.js";
+import { judge as guardJudge } from "@tripwire/guard";
+import { decide as localDecide } from "./decide.js";
 
 export interface PipelineDeps {
   policyResolver: PolicyResolver;
@@ -50,8 +51,8 @@ export class Pipeline {
   private readonly now: () => number;
 
   constructor(private readonly deps: PipelineDeps) {
-    this.judge = deps.judge ?? stubJudge;
-    this.decideFn = deps.decide ?? stubDecide;
+    this.judge = deps.judge ?? guardJudge;
+    this.decideFn = deps.decide ?? localDecide;
     this.now = deps.now ?? Date.now;
   }
 

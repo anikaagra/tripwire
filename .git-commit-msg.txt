@@ -1,0 +1,14 @@
+feat(proxy): wire the real guard judge from @tripwire/guard
+
+Nila's judge() (Claude Haiku, fail-closed, structured output) is on main
+and matches GuardInput/GuardVerdict exactly, so this is the swap the
+guardStub.ts docblock called for: pipeline.ts now defaults to
+@tripwire/guard's judge instead of the local stub. decide() stays local
+(renamed guardStub.ts -> decide.ts) until she moves her own version into
+packages/guard. Added a root .env loader to main.ts, same convention as
+apps/agent, so ANTHROPIC_API_KEY reaches the judge when the proxy runs
+directly. pipeline.test.ts now injects an explicit fake judge so tests
+stay offline instead of depending on default behavior that used to be a
+stub and is now a real network call. 47/47 tests pass, typecheck clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
