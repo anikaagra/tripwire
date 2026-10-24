@@ -29,6 +29,9 @@ export function loadProxyConfig(path: string): ProxyConfig {
 
   const proxySection = (doc.proxy ?? {}) as Record<string, unknown>;
   const httpSection = (proxySection.http ?? {}) as Record<string, unknown>;
+  // TRIPWIRE_CONTROL_PORT overrides the YAML port, so the harness can give each
+  // proxy a unique control-API port (needed to run enforce-mode runs in parallel).
+  const envPort = process.env.TRIPWIRE_CONTROL_PORT ? Number(process.env.TRIPWIRE_CONTROL_PORT) : undefined;
 
   const upstreams = ((doc.upstreams ?? []) as Record<string, unknown>[]).map((u): UpstreamConfig => ({
     name: String(u.name),
@@ -44,7 +47,7 @@ export function loadProxyConfig(path: string): ProxyConfig {
   return {
     mode,
     stdio: proxySection.stdio !== false,
-    httpPort: typeof httpSection.port === "number" ? httpSection.port : undefined,
+    httpPort: envPort ?? (typeof httpSection.port === "number" ? httpSection.port : undefined),
     policyFile: String(doc.policyFile ?? "./tripwire.policy.yaml"),
     upstreams,
     approvalTimeoutMs: typeof approvalsSection.timeoutMs === "number" ? approvalsSection.timeoutMs : 45_000,
