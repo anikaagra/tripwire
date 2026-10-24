@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-/** pnpm approve <approval-id> — flips a pending approval to approved; the waiting proxy picks it up within one poll tick. */
+/** pnpm tripwire:approve <approval-id> — flips a pending approval to approved; the waiting proxy picks it up within one poll tick. */
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FileApprovalBackend } from "../approvals/fileApprovalBackend.js";
@@ -9,7 +9,7 @@ const REPO_ROOT = resolve(__dirname, "../../../..");
 
 const id = process.argv[2];
 if (!id) {
-  console.error("Usage: pnpm approve <approval-id>");
+  console.error("Usage: pnpm tripwire:approve <approval-id>");
   process.exit(1);
 }
 

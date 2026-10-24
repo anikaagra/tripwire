@@ -1,0 +1,15 @@
+{
+  "name": "@tripwire/redteam",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "report": "tsx src/report.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@tripwire/harness": "workspace:*"
+  }
+}
