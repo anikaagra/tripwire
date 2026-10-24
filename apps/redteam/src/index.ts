@@ -120,6 +120,9 @@ async function main(): Promise<void> {
   // in-memory state, so parallel runs don't collide or touch the live demo's
   // Convex envState. (BANK_STATE only applies to the local backend.)
   process.env.BANK_STATE ??= "memory";
+  // Explicit, so a BANK_BACKEND exported in the shell/.env can never send parallel red team
+  // runs to Nessie; --backend is the only switch.
+  process.env.BANK_BACKEND = BACKEND;
   if (BACKEND === "nessie") {
     // Ctrl-C mid-suite must not leave injected text on the real demo bill.
     process.on("SIGINT", () => {
