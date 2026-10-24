@@ -97,7 +97,7 @@ export class Pipeline {
     };
     const verdict = await this.judge(guardInput);
 
-    let final = this.decideFn({ ruleOutcome: ruleResult.outcome, taintHits, verdict });
+    let final = this.decideFn({ ruleOutcome: ruleResult.outcome, ruleHits: ruleResult.hits, taintHits, verdict });
 
     if (session.mode === "off") {
       final = { decision: "allow", reason: "Tripwire is off for this session." };

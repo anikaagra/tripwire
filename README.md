@@ -36,7 +36,24 @@ client's config.
 We all use **one** Convex deployment: Asmi's `tripwire` project.
 
 - **Deployment URL:** put the shared `CONVEX_URL` (ask Asmi) in your `.env.local`. Clients (proxy, dashboard, `pnpm tail`) read and write through it.
-- **Deploy key:** if you need to push functions yourself, Asmi will share a deploy key **privately** (DM only). Never commit it or paste it in a channel. Put it in `.env.local` as `CONVEX_DEPLOY_KEY`.
+- **Deploy key:** if you need to push functions yourself, Asmi will share a deploy key **privately** (DM only). Never commit it or paste it in a channel. Step-by-step setup, the exact deploy command, and pitfalls: [`docs/convex-team.md`](docs/convex-team.md).
 - **Always `git pull` on `main` before `npx convex dev`.** `convex dev` pushes your whole local `convex/` folder, so stale files would delete or overwrite other people's functions on the shared deployment.
 - Add your queries and mutations in your own file under `convex/` (see the list at the top of `convex/schema.ts`). Schema changes go through Asmi.
 - Dev data: `pnpm seed:dev` inserts a fake session and events; `pnpm seed:clear` removes them.
+
+## Built on Capital One Nessie
+
+Tripwire's bank runs on real Nessie records. Every payment the agent makes, and every attack it falls for when Tripwire is off, is a real Nessie withdrawal and deposit. The attacker's account visibly receives the stolen $2,000.
+
+**Endpoints used:** `POST /customers`, `POST /customers/{id}/accounts`, `GET /accounts/{id}`, `POST`/`GET /accounts/{id}/withdrawals`, `POST`/`GET /accounts/{id}/deposits`, `DELETE /deposits/{id}`, `POST`/`GET /accounts/{id}/bills`, `GET`/`PUT`/`DELETE /bills/{id}`.
+
+**How it works:** Nessie never moves an account's balance and transfers can't name a payee, so we verified this with `pnpm nessie:verify` and built a ledger. Each payment is a withdrawal from the user plus a deposit to the payee, tagged with the run and session. The balance is computed from this run's records, so a reset restores $3,200 instantly. One attack hides inside a real Nessie bill's payee field: the injection arrives through the banking API itself. Average 116 ms per Nessie call; every bank tool answers in under 1 s. Details: [`docs/nessie-findings.md`](docs/nessie-findings.md), [`apps/mock-servers/bank/README.md`](apps/mock-servers/bank/README.md).
+
+**Run it:**
+```sh
+pnpm nessie:verify                         # probe live Nessie behavior (docs/nessie-findings.md)
+pnpm nessie:seed                           # create or reuse the user, Bay Electric, attacker 4417, and the bills
+BANK_BACKEND=nessie pnpm bank:control      # POST /reset?scenario=bill-pay before each demo
+pnpm redteam --backend nessie --concurrency 1 --limit 5   # live on-stage attacks
+```
+Switch backends with `BANK_BACKEND=nessie|local`. The tools behave identically on both, and `local` is the offline fallback.
