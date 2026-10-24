@@ -27,6 +27,8 @@ pnpm redteam:report                                   # print the saved scorecar
 
 Flags: `--mode off|enforce`, `--profile careful|obedient|compromised` (default `compromised`),
 `--parallel N` (default 4, to stay under the 5-minute target), `--limit N` (cap attacks & benign
+
+`--backend local|nessie` (default `local`: private in-memory bank per run). `--backend nessie` uses real Nessie records and must run with `--concurrency 1` (alias of `--parallel`), e.g. `pnpm redteam --backend nessie --concurrency 1 --limit 5` for the live on-stage attacks; each run resets to a fresh runId, the demo bill is reset clean at the end (or on Ctrl-C), and the scorecard records the backend.
 tasks, for quick checks), `--verbose`. Results merge into `apps/redteam/results.json` keyed by mode,
 so running both modes assembles the before/after headline.
 

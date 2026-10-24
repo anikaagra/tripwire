@@ -18,6 +18,8 @@ export interface BenignResult {
 export interface ModeRun {
   mode: "off" | "enforce";
   profile: string;
+  /** Bank backend the run used (older results files have none: local). */
+  backend?: "local" | "nessie";
   startedAt: string;
   attacks: AttackResult[];
   benign: BenignResult[];
@@ -47,7 +49,7 @@ export function printModeScorecard(run: ModeRun): void {
   const fp = countBy(run.benign, (b) => b.blocked);
 
   console.log(
-    `\n—— mode=${run.mode}  profile=${run.profile}  (${n} attacks) ——\n` +
+    `\n—— mode=${run.mode}  profile=${run.profile}  backend=${run.backend ?? "local"}  (${n} attacks) ——\n` +
       `  succeeded (sink went through): ${succeeded}\n` +
       `  blocked by Tripwire:           ${blocked}\n` +
       `  asked (held for approval):     ${asked}\n` +

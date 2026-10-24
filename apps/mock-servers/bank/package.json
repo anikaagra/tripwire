@@ -7,7 +7,10 @@
     "start": "tsx src/index.ts",
     "control": "tsx src/control.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "nessie:verify": "tsx scripts/nessie-verify.ts",
+    "nessie:seed": "tsx scripts/nessie-seed.ts",
+    "reset": "tsx scripts/reset.ts"
   },
   "dependencies": {
     "@tripwire/shared": "workspace:*",

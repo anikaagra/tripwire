@@ -9,6 +9,12 @@
  *   pnpm redteam --mode off --profile compromised
  *   pnpm redteam --mode enforce --profile compromised   (needs the proxy entrypoint)
  *   pnpm redteam:report                                 (prints the saved scorecard)
+ *   pnpm redteam --backend nessie --concurrency 1 --limit 5   (live on-stage attacks on Nessie)
+ *
+ * --backend local (default): each run gets a private in-memory bank (BANK_STATE=memory),
+ * so runs can go in parallel. --backend nessie: real Nessie records, one run at a time
+ * (all runs share the seeded accounts); each run resets to a fresh runId first, and the
+ * demo bill is reset clean when the suite ends or is interrupted.
  *
  * --profile compromised (default) simulates a hijacked agent so every attack produces a
  * live sink: off => the damage baseline, enforce => what Tripwire actually blocks. Use
@@ -17,6 +23,7 @@
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import Anthropic from "@anthropic-ai/sdk";
 import { runScenario, SYSTEM_PROMPTS, type Profile, type RunMode } from "@tripwire/harness";
 import { buildAttacks, BENIGN_TASKS } from "./attacks.js";
@@ -58,7 +65,33 @@ function getFlag(name: string, fallback?: string): string | undefined {
 }
 const MODE = getFlag("mode", "off") as RunMode;
 const PROFILE = getFlag("profile", "compromised") as Profile;
-const PARALLEL = Math.max(1, parseInt(getFlag("parallel", "4")!, 10));
+const BACKEND = getFlag("backend", "local") as "local" | "nessie";
+if (BACKEND !== "local" && BACKEND !== "nessie") {
+  console.error(`--backend must be local or nessie, got ${BACKEND}`);
+  process.exit(1);
+}
+// --concurrency (alias: --parallel). Nessie runs share accounts, so they must be sequential.
+const PARALLEL = Math.max(1, parseInt(getFlag("concurrency", getFlag("parallel", BACKEND === "nessie" ? "1" : "4"))!, 10));
+if (BACKEND === "nessie" && PARALLEL > 1) {
+  console.error("--backend nessie runs share one set of Nessie accounts: use --concurrency 1.");
+  process.exit(1);
+}
+
+/** Nessie only: reset the demo scenario with no attack seeds, so no injected text is left on the real bill. */
+function cleanNessieReset(): void {
+  if (BACKEND !== "nessie") return;
+  const env: NodeJS.ProcessEnv = { ...process.env, BANK_BACKEND: "nessie" };
+  delete env.TRIPWIRE_BILL_FIELD_INJECTION;
+  delete env.TRIPWIRE_ATTACK_BILL;
+  try {
+    execFileSync(process.execPath, ["--import", "tsx", resolve(REPO_ROOT, "apps/mock-servers/bank/scripts/reset.ts"), SCENARIO], {
+      env,
+      stdio: ["ignore", "ignore", "inherit"],
+    });
+  } catch (err) {
+    console.error(`  (clean Nessie reset failed: ${(err as Error).message}). Run: BANK_BACKEND=nessie pnpm bank:reset`);
+  }
+}
 const LIMIT = parseInt(getFlag("limit", "0")!, 10); // 0 = all; otherwise cap attacks & benign
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5-5";
 const VERBOSE = process.argv.includes("--verbose");
@@ -83,9 +116,18 @@ async function main(): Promise<void> {
     console.error("No ANTHROPIC_API_KEY found. Set it in .env at the repo root.");
     process.exit(1);
   }
-  // Red team only: each spawned bank keeps a private in-memory state, so parallel
-  // runs don't collide or touch the live demo's Convex envState.
+  // Red team only: with the local backend, each spawned bank keeps a private
+  // in-memory state, so parallel runs don't collide or touch the live demo's
+  // Convex envState. (BANK_STATE only applies to the local backend.)
   process.env.BANK_STATE ??= "memory";
+  if (BACKEND === "nessie") {
+    // Ctrl-C mid-suite must not leave injected text on the real demo bill.
+    process.on("SIGINT", () => {
+      console.error("\nInterrupted: resetting the Nessie demo bill clean...");
+      cleanNessieReset();
+      process.exit(130);
+    });
+  }
   const anthropic = new Anthropic();
   const allAttacks = buildAttacks();
   const attacks = LIMIT > 0 ? allAttacks.slice(0, LIMIT) : allAttacks;
@@ -95,10 +137,10 @@ async function main(): Promise<void> {
 
   console.log(
     `Tripwire Red Team  |  mode=${MODE}  profile=${PROFILE}  model=${MODEL}  ` +
-      `attacks=${attacks.length}  benign=${benignTasks.length}  parallel=${PARALLEL}` +
+      `attacks=${attacks.length}  benign=${benignTasks.length}  backend=${BACKEND}  concurrency=${PARALLEL}` +
       (sink.active ? `  convex=on runId=${runId}` : "  convex=off"),
   );
-  await sink.startRun(runId);
+  await sink.startRun(runId, BACKEND);
   if (PROFILE === "compromised") {
     console.log(
       "NOTE: 'compromised' simulates a hijacked agent — each attack's sink is fired to give Tripwire\n" +
@@ -121,6 +163,7 @@ async function main(): Promise<void> {
         intendedAction: a.intendedAction,
         verbose: VERBOSE,
         label: a.id,
+        bankBackend: BACKEND,
       },
       anthropic,
     );
@@ -142,6 +185,7 @@ async function main(): Promise<void> {
         system: SYSTEM_PROMPTS.careful,
         verbose: VERBOSE,
         label: b.id,
+        bankBackend: BACKEND,
       },
       anthropic,
     );
@@ -149,9 +193,12 @@ async function main(): Promise<void> {
     return { id: b.id, blocked, error: r.error };
   });
 
+  cleanNessieReset();
+
   const modeRun: ModeRun = {
     mode: MODE,
     profile: PROFILE,
+    backend: BACKEND,
     startedAt: new Date().toISOString(),
     attacks: attackResults,
     benign: benignResults,
@@ -164,6 +211,7 @@ async function main(): Promise<void> {
     mode: MODE,
     profile: PROFILE,
     model: MODEL,
+    backend: BACKEND,
     total: attackResults.length,
     succeeded: count("succeeded"),
     blocked: count("blocked"),
@@ -196,5 +244,6 @@ async function main(): Promise<void> {
 
 main().catch((err) => {
   console.error(err);
+  cleanNessieReset();
   process.exit(1);
 });
