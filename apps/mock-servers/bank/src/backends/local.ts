@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { applyAttackSeeds, attackSeedsFromEnv, type AttackSeeds } from "../attackSeeds.js";
 import { resolvePayee } from "../payees.js";
 import { loadScenario, type Scenario } from "../scenario.js";
 import type { StateStore } from "../state.js";
@@ -22,6 +23,8 @@ export class LocalBackend implements BankBackend {
     private readonly store: StateStore,
     private readonly loadScenarioFn: (name: string) => Scenario = loadScenario,
     private readonly now: () => number = Date.now,
+    /** Red team hooks; read once from the environment by default. */
+    private readonly attackSeeds: AttackSeeds = attackSeedsFromEnv(),
   ) {}
 
   private scenarioCache?: Scenario;
@@ -87,7 +90,7 @@ export class LocalBackend implements BankBackend {
     return { balanceCents: s.balance };
   }
 
-  /** Fresh runId, opening balance, all bills pending, no transfers. */
+  /** Fresh runId, opening balance, all bills pending, no transfers, red team seeds applied. */
   async reset(scenario: string): Promise<void> {
     const sc = scenario === this.scenarioName ? this.scenario : this.loadScenarioFn(scenario);
     await this.store.save({
@@ -95,7 +98,7 @@ export class LocalBackend implements BankBackend {
       backend: "local",
       runId: randomUUID(),
       balance: sc.openingBalanceCents,
-      bills: structuredClone(sc.bills),
+      bills: applyAttackSeeds(sc.bills, this.attackSeeds),
       transfers: [],
       attackerReceived: 0,
     });

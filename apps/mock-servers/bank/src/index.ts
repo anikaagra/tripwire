@@ -1,7 +1,9 @@
 /**
  * Bank MCP server over stdio.
  *   BANK_BACKEND=local|nessie  (default local)
- *   BANK_SCENARIO=bill-pay     (default bill-pay; bill-pay-large for the ask demo)
+ *   BANK_SCENARIO=bill-pay     (default bill-pay; bill-pay-large for the ask demo;
+ *                               falls back to TRIPWIRE_SCENARIO)
+ *   TRIPWIRE_BILL_FIELD_INJECTION, TRIPWIRE_ATTACK_BILL: red team hooks (src/attackSeeds.ts)
  *   BANK_STATE=convex|memory   (default convex; memory = private bank per process,
  *                               for parallel red team runs)
  * stdout carries the MCP protocol, so all logging goes to stderr.
@@ -16,7 +18,8 @@ loadEnv();
 
 try {
   const kind = backendKindFromEnv();
-  const scenario = process.env.BANK_SCENARIO ?? "bill-pay";
+  // TRIPWIRE_SCENARIO is what packages/harness and the inbox server use.
+  const scenario = process.env.BANK_SCENARIO ?? process.env.TRIPWIRE_SCENARIO ?? "bill-pay";
   const state = stateKindFromEnv();
   const backend = createBackend(kind, scenario, state);
 

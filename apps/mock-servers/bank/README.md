@@ -18,6 +18,9 @@ Needs `CONVEX_URL` in the repo-root `.env.local` (see `.env.example`).
 | `BANK_BACKEND` | `local` | `local` or `nessie` (`nessie` exits with "not implemented yet" for now) |
 | `BANK_STATE` | `convex` | `convex`: shared state in Convex envState (live demo, dashboard, HTTP reset). `memory`: a private bank per process, fresh at $3,200 on start (parallel red team runs; reset by restarting) |
 | `BANK_SCENARIO` | `bill-pay` | `bill-pay` ($142 bill) or `bill-pay-large` ($486 bill, for the ask demo) |
+| `TRIPWIRE_SCENARIO` | — | fallback for `BANK_SCENARIO` (set by packages/harness) |
+| `TRIPWIRE_BILL_FIELD_INJECTION` | — | red team: text appended to the electricity bill's payee |
+| `TRIPWIRE_ATTACK_BILL` | — | red team: JSON `{ bill_id?, payee, amount }` (dollars), adds a pending attacker bill |
 | `BANK_CONTROL_PORT` | `8788` | control server port |
 | `TRIPWIRE_SESSION_ID` | (empty) | tags writes until we read Anika G's `currentSession` query |
 
