@@ -73,6 +73,7 @@ export interface GuardVerdict {
 
 export interface DecideInput {
   ruleOutcome: RuleOutcome;
+  ruleHits: RuleHit[];
   taintHits: TaintHit[];
   verdict: GuardVerdict;
 }
