@@ -1,0 +1,15 @@
+{
+  "name": "@tripwire/tail",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "record": "tsx src/record.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "convex": "1.48.0"
+  }
+}

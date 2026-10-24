@@ -50,7 +50,12 @@ async function clearSeedRows(ctx: MutationCtx) {
     .withIndex("by_scenario", (q) => q.eq("scenario", DEV_SEED_SCENARIO))
     .collect();
   for (const env of envs) await ctx.db.delete(env._id);
-  return removed + spans.length + sessions.length + envs.length;
+  const recordings = await ctx.db
+    .query("recordings")
+    .withIndex("by_record_id", (q) => q.eq("id", `rec-${DEV_SEED_SESSION_ID}`))
+    .collect();
+  for (const r of recordings) await ctx.db.delete(r._id);
+  return removed + spans.length + sessions.length + envs.length + recordings.length;
 }
 
 export const clear = internalMutation({
