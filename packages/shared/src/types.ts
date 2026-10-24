@@ -139,6 +139,15 @@ export interface ToolPolicy {
   kind: PolicyKind;
   risk?: RiskTier;
   trustedDescription: string;
+  /**
+   * Only meaningful for kind: "source". Default true: the result becomes an
+   * untrusted span, so a later sink argument matching it taints. Set false
+   * for a source that returns the user's OWN data (e.g. the bank's own
+   * get_balance/list_bills) rather than third-party content (email, a
+   * product catalog) — otherwise the user's own bill_id, read straight
+   * back from list_bills, taints when paying that exact bill.
+   */
+  taintSource?: boolean;
   rules?: {
     maxAmountCents?: number;
     recipientAllowlist?: string[];

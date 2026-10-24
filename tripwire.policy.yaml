@@ -7,6 +7,10 @@
 #   own tool description, so a poisoned description can't talk to the judge.
 # rules.maxAmountCents / recipientAllowlist / alwaysAsk feed packages/policy's
 # evaluateRules(); a hit means "escalate", never an automatic allow.
+# taintSource: false on a source means its result is the user's OWN data
+# (not third-party content), so it's never stored as an untrusted span and
+# can't taint a later sink argument — e.g. the bill_id pay_bill reads back
+# from list_bills shouldn't taint just because it came from a source call.
 
 tools:
   inbox__list_emails:
@@ -27,10 +31,12 @@ tools:
   bank__get_balance:
     kind: source
     trustedDescription: Reads the current balance of the user's checking account.
+    taintSource: false
 
   bank__list_bills:
     kind: source
     trustedDescription: Lists the user's pending and completed bills.
+    taintSource: false
 
   bank__pay_bill:
     kind: sink

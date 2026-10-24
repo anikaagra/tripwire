@@ -39,6 +39,9 @@ function validateToolPolicy(path: string, name: string, value: unknown): ToolPol
   if (v.risk !== undefined && v.risk !== "low" && v.risk !== "high" && v.risk !== "critical") {
     throw new Error(`${path}: tools.${name}.risk must be low | high | critical`);
   }
+  if (v.taintSource !== undefined && typeof v.taintSource !== "boolean") {
+    throw new Error(`${path}: tools.${name}.taintSource must be a boolean`);
+  }
 
   const rulesRaw = v.rules as Record<string, unknown> | undefined;
   const rules = rulesRaw
@@ -55,6 +58,7 @@ function validateToolPolicy(path: string, name: string, value: unknown): ToolPol
     kind: v.kind,
     risk: v.risk as ToolPolicy["risk"],
     trustedDescription: v.trustedDescription,
+    taintSource: v.taintSource as boolean | undefined,
     rules,
   };
 }

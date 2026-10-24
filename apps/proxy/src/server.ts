@@ -63,7 +63,7 @@ export function buildMcpServer(deps: BuildMcpServerDeps): Server {
 
     const upstreamResult = await tool.client.callTool({ name: tool.bareName, arguments: args });
 
-    if (policy.kind === "source") {
+    if (policy.kind === "source" && policy.taintSource !== false) {
       const { text, rawHtml } = extractSpanContent(upstreamResult as { content?: Array<{ type: string; text?: string }> });
       await pipeline.recordSourceResult({
         sessionId,
