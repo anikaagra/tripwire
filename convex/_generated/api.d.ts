@@ -10,6 +10,7 @@
 
 import type * as devSeed from "../devSeed.js";
 import type * as envState from "../envState.js";
+import type * as sharedTypesCheck from "../sharedTypesCheck.js";
 
 import type {
   ApiFromModules,
@@ -20,6 +21,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   devSeed: typeof devSeed;
   envState: typeof envState;
+  sharedTypesCheck: typeof sharedTypesCheck;
 }>;
 
 /**

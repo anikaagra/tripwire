@@ -1,19 +1,17 @@
 /**
  * Tripwire Convex schema. Owner: Asmi (Bank + Data).
  *
+ * packages/shared/src/types.ts is the source of truth. Validators below mirror
+ * those types field for field, so the proxy can insert shared objects as-is.
+ * convex/sharedTypesCheck.ts fails the typecheck if they drift apart.
+ *
  * Conventions
- * - Money is always integer cents (v.number(); mutations reject non-integers).
- * - Every id that crosses lanes (sessionId, eventId, spanId, approvalId, runId,
- *   recordingId, Nessie ids, bill ids) is a plain v.string(). Other components
- *   generate them outside Convex, before the row exists. Never assume a format:
- *   Nessie returns UUIDs, not Mongo ObjectIds. Each owning table stores its id
- *   as an indexed field (e.g. sessions.sessionId, index by_sessionId).
+ * - Each record's own id is a string field named `id`,
+ *   generated outside Convex (index by_record_id; "by_id" is reserved by
+ *   Convex). Never assume an id format: Nessie uses UUIDs.
+ *   Cross-references use the names from packages/shared (sessionId, eventId, spanId).
  * - Convex's own _id is internal only; no table references another by v.id.
- * - Fields other lanes fill in later are v.optional.
- * - `devSeed: true` marks rows created by convex/devSeed.ts so they can be cleared.
- * - entity/ruleHit/taintHit mirror packages/shared/src/types.ts field-for-field
- *   (Entity, RuleHit, TaintHit) — that package is the source of truth for these
- *   shapes, not this file.
+ * - Money is integer cents (v.number(); mutations reject non-integers).
  *
  * Queries/mutations each owner is expected to add in their own file:
  * - Anika G (convex/sessions.ts, convex/events.ts, convex/approvals.ts):
@@ -26,44 +24,94 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// ---- Unions (packages/shared) ----
 export const mode = v.union(v.literal("off"), v.literal("monitor"), v.literal("enforce"));
-export const toolKind = v.union(v.literal("source"), v.literal("sink"), v.literal("neutral"));
+export const policyKind = v.union(v.literal("source"), v.literal("sink"), v.literal("neutral"));
 export const decision = v.union(v.literal("allow"), v.literal("block"), v.literal("ask"));
+export const entityKind = v.union(
+  v.literal("email"),
+  v.literal("url"),
+  v.literal("account"),
+  v.literal("amount"),
+  v.literal("phone"),
+  v.literal("path"),
+);
+export const approvalStatus = v.union(
+  v.literal("pending"),
+  v.literal("approved"),
+  v.literal("denied"),
+  v.literal("timed_out"),
+);
+export const billStatus = v.union(v.literal("pending"), v.literal("completed"));
+// Not in packages/shared:
 export const backend = v.union(v.literal("local"), v.literal("nessie"));
 
-// Mirrors packages/shared/src/types.ts (Entity, RuleHit, TaintHit) exactly —
-// that file is the source of truth; these values get written here verbatim.
+// ---- Shared record shapes (packages/shared) ----
+export const ruleHit = v.object({ rule: v.string(), detail: v.string() });
+
 export const entity = v.object({
-  kind: v.string(), // "email" | "url" | "account" | "amount" | "phone" | "path"
+  kind: entityKind,
   value: v.string(),
   start: v.number(),
   end: v.number(),
 });
 
-export const ruleHit = v.object({
-  rule: v.string(),
-  detail: v.string(),
-});
-
 export const taintHit = v.object({
-  argKey: v.string(), // e.g. "to_account"
+  argKey: v.string(),
   value: v.string(),
-  entityKind: v.string(),
+  entityKind,
   spanId: v.string(),
 });
 
+export const untrustedSpan = v.object({
+  id: v.string(),
+  sessionId: v.string(),
+  server: v.string(),
+  tool: v.string(),
+  itemId: v.string(),
+  text: v.string(),
+  rawHtml: v.optional(v.string()),
+  entities: v.array(entity),
+});
+
+export const toolCallEvent = v.object({
+  id: v.string(),
+  sessionId: v.string(),
+  ts: v.number(),
+  server: v.string(), // "bank"
+  tool: v.string(), // "transfer" (agent sees "bank__transfer")
+  kind: policyKind,
+  args: v.record(v.string(), v.any()),
+  decision,
+  reason: v.string(),
+  ruleHits: v.array(ruleHit),
+  taintHits: v.array(taintHit),
+  latencyMs: v.number(),
+  nessieId: v.optional(v.string()),
+});
+
+export const approvalRecord = v.object({
+  id: v.string(),
+  eventId: v.string(),
+  status: approvalStatus,
+  createdAt: v.number(),
+  decidedAt: v.optional(v.number()),
+});
+
+/** Shared Bill plus optional bank-internal fields (apps/mock-servers/bank/src/types.ts). */
 export const bill = v.object({
   id: v.string(),
-  nessieId: v.optional(v.string()),
-  payeeId: v.string(),
   payee: v.string(),
-  nickname: v.optional(v.string()),
   amountCents: v.number(),
-  status: v.union(v.literal("pending"), v.literal("completed")),
+  status: billStatus,
+  nessieId: v.optional(v.string()),
+  payeeId: v.optional(v.string()),
+  nickname: v.optional(v.string()),
   dueDate: v.optional(v.string()),
   paidAt: v.optional(v.number()),
 });
 
+// ---- Bank / demo state (not in packages/shared) ----
 export const transfer = v.object({
   id: v.string(),
   nessieId: v.optional(v.string()),
@@ -85,78 +133,31 @@ export const outboxEmail = v.object({
 });
 
 export default defineSchema({
+  // No shared Session type yet. Matches the proxy's Session (apps/proxy/src/sessions.ts)
+  // so it can be inserted as-is, plus optional fields from the design doc.
   sessions: defineTable({
-    sessionId: v.string(),
+    id: v.string(),
     mode,
     intent: v.string(),
-    scenario: v.string(),
+    scenario: v.optional(v.string()),
     startedAt: v.number(),
-    contextTainted: v.boolean(),
+    contextTainted: v.optional(v.boolean()),
     endedAt: v.optional(v.number()),
     backend: v.optional(backend),
-    devSeed: v.optional(v.boolean()),
   })
-    .index("by_sessionId", ["sessionId"])
+    .index("by_record_id", ["id"])
     .index("by_startedAt", ["startedAt"]),
 
-  events: defineTable({
-    eventId: v.string(),
-    sessionId: v.string(),
-    ts: v.number(),
-    server: v.string(), // "bank"
-    tool: v.string(), // "transfer" (agent sees "bank__transfer")
-    kind: toolKind,
-    args: v.any(),
-    decision,
-    reason: v.string(),
-    ruleHits: v.array(ruleHit),
-    taintHits: v.array(taintHit),
-    latencyMs: v.number(),
-    nessieId: v.optional(v.string()),
-    // Explanation fields (guard / dashboard fill these in)
-    riskTier: v.optional(v.string()),
-    judgeRequested: v.optional(v.union(v.literal("yes"), v.literal("no"), v.literal("unclear"))),
-    judgeReason: v.optional(v.string()),
-    highlightSpanId: v.optional(v.string()),
-    highlightText: v.optional(v.string()),
-    resultText: v.optional(v.string()),
-    approvalId: v.optional(v.string()),
-    devSeed: v.optional(v.boolean()),
-  })
-    .index("by_eventId", ["eventId"])
+  events: defineTable(toolCallEvent)
+    .index("by_record_id", ["id"])
     .index("by_session_ts", ["sessionId", "ts"]),
 
-  untrustedSpans: defineTable({
-    spanId: v.string(),
-    sessionId: v.string(),
-    server: v.string(),
-    tool: v.string(),
-    itemId: v.string(),
-    text: v.string(),
-    rawHtml: v.optional(v.string()),
-    entities: v.array(entity),
-    ts: v.optional(v.number()),
-    devSeed: v.optional(v.boolean()),
-  })
-    .index("by_spanId", ["spanId"])
+  untrustedSpans: defineTable(untrustedSpan)
+    .index("by_record_id", ["id"])
     .index("by_session", ["sessionId"]),
 
-  approvals: defineTable({
-    approvalId: v.string(),
-    eventId: v.string(),
-    sessionId: v.optional(v.string()),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("denied"),
-      v.literal("timed_out"),
-    ),
-    createdAt: v.number(),
-    decidedAt: v.optional(v.number()),
-    decidedBy: v.optional(v.string()),
-    devSeed: v.optional(v.boolean()),
-  })
-    .index("by_approvalId", ["approvalId"])
+  approvals: defineTable(approvalRecord)
+    .index("by_record_id", ["id"])
     .index("by_status", ["status"])
     .index("by_event", ["eventId"]),
 
@@ -177,18 +178,19 @@ export default defineSchema({
   }).index("by_scenario", ["scenario"]),
 
   redteamRuns: defineTable({
-    runId: v.string(),
+    id: v.string(),
     startedAt: v.number(),
     status: v.union(v.literal("running"), v.literal("done"), v.literal("failed")),
     backend,
     finishedAt: v.optional(v.number()),
     metrics: v.optional(v.any()),
   })
-    .index("by_runId", ["runId"])
+    .index("by_record_id", ["id"])
     .index("by_startedAt", ["startedAt"]),
 
   attacks: defineTable({
-    runId: v.string(),
+    id: v.string(),
+    runId: v.string(), // redteamRuns.id
     carrier: v.string(),
     technique: v.string(),
     goal: v.string(),
@@ -196,21 +198,23 @@ export default defineSchema({
     outcome: v.string(),
     eventIds: v.array(v.string()),
     sessionId: v.optional(v.string()),
-  }).index("by_run", ["runId"]),
+  })
+    .index("by_record_id", ["id"])
+    .index("by_run", ["runId"]),
 
   // Keep under Convex's 1 MB document limit: one recording per demo run.
   recordings: defineTable({
-    recordingId: v.string(),
+    id: v.string(),
     runId: v.string(),
     sessionId: v.optional(v.string()),
     createdAt: v.number(),
     events: v.array(
       v.object({
         offsetMs: v.number(), // time since the first event, for replay timing
-        event: v.any(),
+        event: toolCallEvent,
       }),
     ),
   })
-    .index("by_recordingId", ["recordingId"])
+    .index("by_record_id", ["id"])
     .index("by_run", ["runId"]),
 });

@@ -81,6 +81,9 @@ async function main(): Promise<void> {
     console.error("No ANTHROPIC_API_KEY found. Set it in .env at the repo root.");
     process.exit(1);
   }
+  // Red team only: each spawned bank keeps a private in-memory state, so parallel
+  // runs don't collide or touch the live demo's Convex envState.
+  process.env.BANK_STATE ??= "memory";
   const anthropic = new Anthropic();
   const attacks = buildAttacks();
 
