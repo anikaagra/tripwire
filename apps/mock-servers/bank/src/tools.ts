@@ -18,7 +18,7 @@ export interface ToolContext {
 }
 
 export const defaultContext: ToolContext = {
-  // TODO: read Anika G's currentSession query once it exists.
+  // Default for tests and embedders; src/index.ts passes sessionContext() (Convex currentSession).
   sessionId: async () => process.env.TRIPWIRE_SESSION_ID ?? "",
 };
 
