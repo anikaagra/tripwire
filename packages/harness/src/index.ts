@@ -59,6 +59,13 @@ export interface RunOptions {
    * with its attack seeds applied; run these sequentially (shared accounts).
    */
   bankBackend?: "local" | "nessie";
+  /**
+   * Reset the bank scenario before this run serves (sets BANK_RESET_ON_START=1 on
+   * the bank). With shared bank state, back-to-back runs otherwise accumulate
+   * (balance keeps dropping, bills already paid), so `pnpm agent --runs N` uses this
+   * to start each run fresh at the scenario's opening balance.
+   */
+  resetBankOnStart?: boolean;
 }
 
 export interface ToolCallRecord {
@@ -150,6 +157,9 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
   const bankOverride: Record<string, string> = opts.bankBackend
     ? { BANK_BACKEND: opts.bankBackend, ...(opts.bankBackend === "nessie" ? { BANK_RESET_ON_START: "1" } : {}) }
     : {};
+  // Reset the scenario on bank start when the caller asks (e.g. --runs N against
+  // shared state). bankBackend: "nessie" already forces this above.
+  if (opts.resetBankOnStart) bankOverride.BANK_RESET_ON_START = "1";
   const env = cleanEnv({
     TRIPWIRE_SCENARIO: opts.scenario,
     BANK_SCENARIO: opts.scenario,
