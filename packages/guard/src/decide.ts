@@ -1,13 +1,10 @@
 import type { DecideInput, FinalDecision } from "@tripwire/shared";
 
 /**
- * TEMPORARY. judge() now comes from Nila's @tripwire/guard (wired in
- * pipeline.ts); decide() is still local here because that package hasn't
- * published its own yet. Delete this file and switch pipeline.ts's decide
- * import to "@tripwire/guard" once it does — same signature.
- */
-
-/**
+ * Combines rules, taint, and the judge's verdict into allow, block, or ask,
+ * per the design doc's combination matrix. Written by Anika G in apps/proxy,
+ * moved here unchanged.
+ *
  * The matrix leaves escalate+taint-hit+judge-"yes" unstated. This follows the pattern of every
  * other row where a taint hit demotes the outcome one notch (allow->ask,
  * ask->block) and resolves it to block.
