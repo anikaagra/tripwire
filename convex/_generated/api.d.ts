@@ -10,6 +10,7 @@
 
 import type * as devSeed from "../devSeed.js";
 import type * as envState from "../envState.js";
+import type * as redteam from "../redteam.js";
 import type * as sharedTypesCheck from "../sharedTypesCheck.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   devSeed: typeof devSeed;
   envState: typeof envState;
+  redteam: typeof redteam;
   sharedTypesCheck: typeof sharedTypesCheck;
 }>;
 
