@@ -4,6 +4,13 @@
 node_modules
 .DS_Store
 dist
+dist/
+*.log
 *.tsbuildinfo
 .tripwire-data
 .tripwire-dev
+scenarios/nessie-ids.json
+!.env.example
+
+# Red Team run artifacts
+apps/redteam/results.json

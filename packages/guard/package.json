@@ -1,0 +1,17 @@
+{
+  "name": "@tripwire/guard",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.2.0",
+    "@tripwire/shared": "workspace:*",
+    "zod": "^4.6.7"
+  }
+}
