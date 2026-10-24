@@ -10,6 +10,7 @@
  */
 import { resolve } from "node:path";
 import { existsSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -103,6 +104,31 @@ async function connectStdio(
   return { name, client };
 }
 
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+/** Wait for the proxy's control API, then POST the user's intent for this session. */
+async function registerIntent(port: number, sessionId: string, intent: string): Promise<void> {
+  const base = `http://localhost:${port}`;
+  // Poll /health briefly (the server is usually up once the MCP handshake completed).
+  for (let i = 0; i < 25; i++) {
+    try {
+      const h = await fetch(`${base}/health`);
+      if (h.ok) break;
+    } catch {
+      /* not listening yet */
+    }
+    await sleep(100);
+  }
+  const res = await fetch(`${base}/sessions/${sessionId}/intent`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: intent }),
+  });
+  if (!res.ok) {
+    throw new Error(`intent registration failed: HTTP ${res.status} at ${base}`);
+  }
+}
+
 /** Build the env that seeds the attack into the mock servers. */
 function attackEnv(attack: AttackSeed | undefined): Record<string, string> {
   const env: Record<string, string> = {};
@@ -136,16 +162,40 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
     const proxyMain = resolve(opts.repoRoot, "apps", "proxy", "src", "main.ts");
     if (!existsSync(proxyMain)) {
       throw new Error(
-        "enforce mode needs apps/proxy/src/main.ts (the proxy MCP server face), " +
-          "which is not built yet. Run in off mode until the proxy entrypoint lands.",
+        "enforce mode needs apps/proxy/src/main.ts (the proxy MCP server face). " +
+          "Pull main / build the proxy, then retry.",
       );
     }
+    const sessionId = randomUUID();
+    // Unique control port per run so enforce-mode runs can execute in parallel without
+    // colliding on the control API (the proxy honors TRIPWIRE_CONTROL_PORT).
+    const controlPort = process.env.TRIPWIRE_CONTROL_PORT
+      ? Number(process.env.TRIPWIRE_CONTROL_PORT)
+      : 8800 + Math.floor(Math.random() * 1000);
+    // The proxy inherits this env and passes it to the bank upstream (BANK_* + attack
+    // seeds). TRIPWIRE_MODE forces enforce; TRIPWIRE_SESSION_ID pins the session so our
+    // intent POST and the agent's calls share it. BANK_STATE=memory keeps each run's bank
+    // private (no Convex dependency, parallel-safe).
     const proxy = await connectStdio(
       "proxy",
       process.execPath,
       ["--import", "tsx", proxyMain],
-      cleanEnv({ ...bankOverride, ...attackEnv(opts.attack), TRIPWIRE_MODE: "enforce", TRIPWIRE_INTENT: opts.intent }),
+      cleanEnv({
+        BANK_SCENARIO: opts.scenario,
+        BANK_STATE: "memory",
+        BANK_BACKEND: "local",
+        ...bankOverride, // lets --backend nessie override the local defaults
+        ...attackEnv(opts.attack),
+        TRIPWIRE_MODE: "enforce",
+        TRIPWIRE_SESSION_ID: sessionId,
+        TRIPWIRE_CONTROL_PORT: String(controlPort),
+      }),
+
     );
+    // Register the user's intent on the control API so the guard can tell requested
+    // actions from planted ones. The control server is listening by the time the MCP
+    // handshake (connectStdio) has completed, but poll briefly to be safe.
+    await registerIntent(controlPort, sessionId, opts.intent);
     return [proxy];
   }
 
