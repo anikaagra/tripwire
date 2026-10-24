@@ -7,10 +7,12 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "node --env-file-if-exists=../../.env.local --env-file-if-exists=../../.env --import tsx src/eval.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.2.0",
+    "@tripwire/policy": "workspace:*",
     "@tripwire/shared": "workspace:*",
     "zod": "^4.6.7"
   }

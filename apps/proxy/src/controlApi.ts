@@ -7,7 +7,12 @@ import type { SessionStore } from "./sessions.js";
  * register the user's intent before (or while) it drives the agent, per the
  * design doc's "harness registers intent with POST /sessions/:id/intent".
  */
-export function startControlApi(port: number, sessions: SessionStore, defaultMode: Mode): HttpServer {
+export function startControlApi(
+  port: number,
+  sessions: SessionStore,
+  defaultMode: Mode,
+  onIntentSet?: (sessionId: string, intent: string) => void
+): HttpServer {
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     const parts = url.pathname.split("/").filter(Boolean);
@@ -22,6 +27,7 @@ export function startControlApi(port: number, sessions: SessionStore, defaultMod
         .then((body) => {
           const text = typeof body.text === "string" ? body.text : "";
           const session = sessions.setIntent(parts[1]!, text, defaultMode);
+          onIntentSet?.(parts[1]!, text);
           respond(res, 200, session);
         })
         .catch((err: Error) => respond(res, 400, { error: err.message }));

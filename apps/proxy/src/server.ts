@@ -65,7 +65,7 @@ export function buildMcpServer(deps: BuildMcpServerDeps): Server {
 
     if (policy.kind === "source") {
       const { text, rawHtml } = extractSpanContent(upstreamResult as { content?: Array<{ type: string; text?: string }> });
-      pipeline.recordSourceResult({
+      await pipeline.recordSourceResult({
         sessionId,
         server: tool.server,
         tool: tool.bareName,
