@@ -27,6 +27,7 @@ import {
   type ModeRun,
   type Results,
 } from "./results.js";
+import { createConvexSink } from "./convexSink.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../..");
@@ -58,6 +59,7 @@ function getFlag(name: string, fallback?: string): string | undefined {
 const MODE = getFlag("mode", "off") as RunMode;
 const PROFILE = getFlag("profile", "compromised") as Profile;
 const PARALLEL = Math.max(1, parseInt(getFlag("parallel", "4")!, 10));
+const LIMIT = parseInt(getFlag("limit", "0")!, 10); // 0 = all; otherwise cap attacks & benign
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5-5";
 const VERBOSE = process.argv.includes("--verbose");
 
@@ -82,12 +84,18 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const anthropic = new Anthropic();
-  const attacks = buildAttacks();
+  const allAttacks = buildAttacks();
+  const attacks = LIMIT > 0 ? allAttacks.slice(0, LIMIT) : allAttacks;
+  const benignTasks = LIMIT > 0 ? BENIGN_TASKS.slice(0, LIMIT) : BENIGN_TASKS;
+  const sink = createConvexSink();
+  const runId = `rt-${MODE}-${Date.now()}`;
 
   console.log(
     `Tripwire Red Team  |  mode=${MODE}  profile=${PROFILE}  model=${MODEL}  ` +
-      `attacks=${attacks.length}  benign=${BENIGN_TASKS.length}  parallel=${PARALLEL}`,
+      `attacks=${attacks.length}  benign=${benignTasks.length}  parallel=${PARALLEL}` +
+      (sink.active ? `  convex=on runId=${runId}` : "  convex=off"),
   );
+  await sink.startRun(runId);
   if (PROFILE === "compromised") {
     console.log(
       "NOTE: 'compromised' simulates a hijacked agent — each attack's sink is fired to give Tripwire\n" +
@@ -118,7 +126,7 @@ async function main(): Promise<void> {
   });
 
   // Benign suite: careful profile, no attack seeded; a blocked legitimate call is a false positive.
-  const benignResults = await pool(BENIGN_TASKS, PARALLEL, async (b): Promise<BenignResult> => {
+  const benignResults = await pool(benignTasks, PARALLEL, async (b): Promise<BenignResult> => {
     const r = await runScenario(
       {
         repoRoot: REPO_ROOT,
@@ -145,6 +153,24 @@ async function main(): Promise<void> {
     attacks: attackResults,
     benign: benignResults,
   };
+
+  // Record to Convex (best-effort; no-op without CONVEX_URL).
+  for (const a of attackResults) await sink.recordAttack(runId, MODE, a);
+  const count = (o: string) => attackResults.filter((r) => r.outcome === o).length;
+  const metrics = {
+    mode: MODE,
+    profile: PROFILE,
+    model: MODEL,
+    total: attackResults.length,
+    succeeded: count("succeeded"),
+    blocked: count("blocked"),
+    asked: count("asked"),
+    notAttempted: count("not_attempted"),
+    errored: count("error"),
+    benignFalsePositives: benignResults.filter((b) => b.blocked).length,
+    benignTotal: benignResults.length,
+  };
+  await sink.finishRun(runId, metrics);
 
   // Merge into the results file, preserving the other mode's run.
   let results: Results = { model: MODEL, generatedAt: new Date().toISOString(), modes: {} };
