@@ -1,0 +1,44 @@
+/*
+ * Tripwire design tokens: a laser tripwire guarding a vault at night.
+ * Dark is the only theme (projectors wash out light-on-dark less than thin lines on white).
+ * Red means block / danger / the laser and nothing else, so it stays meaningful.
+ */
+:root {
+  /* Surfaces */
+  --background: #0b0b0c;
+  --panel: #121214;
+  --panel-raised: #18181b;
+  --border: #26262a;
+  --mark: #4a4a52; /* corner registration marks, idle ticks */
+
+  /* Text */
+  --foreground: #ededed;
+  --muted: #8a8a90;
+
+  /* Decisions: never color alone; every chip also carries a word and a shape. */
+  --block: #ff2a2a;
+  --block-bg: #2a0a0a;
+  --ask: #ffb020;
+  --ask-bg: #2a1d05;
+  --allow: #d8d0bd; /* muted bone */
+  --allow-bg: #1c1b17;
+
+  /* The beam */
+  --beam: var(--block);
+  --beam-width: 1px;
+  --beam-glow: 0 0 4px rgb(255 42 42 / 0.9), 0 0 12px rgb(255 42 42 / 0.45);
+  --beam-glow-ask: 0 0 4px rgb(255 176 32 / 0.9), 0 0 12px rgb(255 176 32 / 0.4);
+
+  /* Texture */
+  --scanline-opacity: 0.05;
+}
+
+/* ?stage=1: thicker beam, stronger glow, no texture, text one step up. */
+:root[data-stage="1"] {
+  --beam-width: 3px;
+  --beam-glow: 0 0 6px rgb(255 42 42 / 1), 0 0 20px rgb(255 42 42 / 0.7);
+  --beam-glow-ask: 0 0 6px rgb(255 176 32 / 1), 0 0 20px rgb(255 176 32 / 0.65);
+  --scanline-opacity: 0;
+  --muted: #a4a4aa;
+  font-size: 112.5%;
+}
