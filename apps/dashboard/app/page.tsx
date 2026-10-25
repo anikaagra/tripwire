@@ -11,12 +11,16 @@ import { DecisionChip, DecisionIcon } from "@/components/DecisionChip";
 import { Label, Panel } from "@/components/Panel";
 import { actionString, actionText } from "@/lib/actions";
 import { formatClock } from "@/lib/replay";
+import { useInbox } from "@/lib/context";
+import { TraceLine } from "@/components/FirewallTrace";
 
 export default function SessionPage() {
   const session = useQuery(api.sessions.currentSession, {});
   const events = useQuery(api.events.eventsBySession, session ? { sessionId: session.id } : "skip");
   const envState = useQuery(api.envState.byScenario, session?.scenario ? { scenario: session.scenario } : "skip");
   const pending = useQuery(api.approvals.pendingApprovals, {});
+  // Sender and subject per email id, from the scenario's inbox seed.
+  const inbox = useInbox(session?.scenario);
 
   // Calls that were already on screen when the page opened don't animate; only
   // ones that arrive while it's open do (the beam snap, the row sliding in).
@@ -128,6 +132,7 @@ export default function SessionPage() {
             {newest.map((e) => {
               const t = actionText(e);
               const blocked = e.decision === "block";
+              const email = e.tool === "read_email" ? inbox?.get(String(e.args.id)) : undefined;
               return (
                 <li key={e.id} className={isLive(e.id) ? "row-enter" : undefined}>
                   <Link
@@ -146,9 +151,15 @@ export default function SessionPage() {
                     <span className="order-last col-span-3 min-w-0 sm:order-none sm:col-span-1">
                       <span className={`block text-xl ${e.kind === "source" ? "text-muted" : "text-foreground"}`}>
                         {t.verb}
-                        {t.value && <span className={`ml-2 break-words font-bold ${blocked ? "text-block" : ""}`}>{t.value}</span>}
+                        {email?.subject ? (
+                          <span className="ml-2 break-words text-foreground">&ldquo;{email.subject}&rdquo;</span>
+                        ) : (
+                          t.value && <span className={`ml-2 break-words font-bold ${blocked ? "text-block" : ""}`}>{t.value}</span>
+                        )}
                       </span>
+                      {email?.from && <span className="block text-base text-muted">from {email.from}</span>}
                       {e.kind !== "source" && <span className="block text-base text-muted sm:truncate">{e.reason}</span>}
+                      {e.kind === "sink" && <TraceLine event={e} />}
                     </span>
                     <span className="justify-self-end">
                       <DecisionChip decision={e.decision} />

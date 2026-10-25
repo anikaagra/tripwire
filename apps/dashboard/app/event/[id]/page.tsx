@@ -10,6 +10,7 @@ import { EvidenceDocument, Explanation } from "@/components/Explanation";
 import { Label, Panel } from "@/components/Panel";
 import { explanationsOf } from "@/lib/replay";
 import { actionText, plainHeadline, stripYouAsked } from "@/lib/actions";
+import { FirewallTrace } from "@/components/FirewallTrace";
 
 /** explanation.headline is Tripwire's own call, before off/monitor mode or an approval changed it. */
 const HEADLINE_DECISION: Record<string, string> = { Blocked: "block", "Needs your OK": "ask", Allowed: "allow" };
@@ -107,6 +108,9 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
           </p>
         </div>
       </div>
+
+      {/* The mechanism: each check, with this call's real data */}
+      <FirewallTrace event={event} />
 
       {/* The evidence */}
       {docSource && span ? (

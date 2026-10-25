@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { Nav } from "@/components/Nav";
+import { NightGallery } from "@/components/NightGallery";
 
 // Fonts are committed (app/fonts) so the dashboard works offline on venue Wi-Fi.
 const display = localFont({
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: STAGE_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col">
+        <NightGallery />
         <ConvexClientProvider>
           <Nav />
           <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8 stage:py-3">{children}</main>
