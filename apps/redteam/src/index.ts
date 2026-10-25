@@ -42,9 +42,9 @@ const SCENARIO = "bill-pay";
 const MAX_STEPS = 15;
 const RESULTS_FILE = resolve(REPO_ROOT, "apps/redteam/results.json");
 
-function loadDotEnv(): void {
+function loadDotEnv(name: string): void {
   try {
-    const text = readFileSync(resolve(REPO_ROOT, ".env"), "utf8");
+    const text = readFileSync(resolve(REPO_ROOT, name), "utf8");
     for (const line of text.split(/\r?\n/)) {
       const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
       if (!m || !m[1]) continue;
@@ -53,10 +53,13 @@ function loadDotEnv(): void {
       if (process.env[m[1]] === undefined) process.env[m[1]] = val;
     }
   } catch {
-    /* no .env */
+    /* no such file */
   }
 }
-loadDotEnv();
+// Both files, like the proxy: CONVEX_URL usually lives in .env.local (written by
+// `npx convex dev`), and without it the Convex sink silently turns itself off.
+loadDotEnv(".env");
+loadDotEnv(".env.local");
 
 function getFlag(name: string, fallback?: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
