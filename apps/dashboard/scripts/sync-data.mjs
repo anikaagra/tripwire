@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copies what the dashboard shows from repo-root files into apps/dashboard/data,
  * because Vercel builds only apps/dashboard. Run after changing
