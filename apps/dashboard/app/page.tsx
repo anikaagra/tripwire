@@ -7,9 +7,10 @@ import Link from "next/link";
 import { ArmSwitch } from "@/components/ArmSwitch";
 import { Beam, type BeamMark, type BeamState } from "@/components/Beam";
 import { BigNumber } from "@/components/BigNumber";
-import { DecisionChip, DecisionIcon } from "@/components/DecisionChip";
+import { DecisionIcon } from "@/components/DecisionChip";
+import { TapeRowContent, tapeRowClass } from "@/components/TapeRow";
 import { Label, Panel } from "@/components/Panel";
-import { actionString, actionText } from "@/lib/actions";
+import { actionString } from "@/lib/actions";
 import { formatClock } from "@/lib/replay";
 
 export default function SessionPage() {
@@ -125,38 +126,17 @@ export default function SessionPage() {
           <p className="px-5 py-6 text-muted">Armed and waiting for the agent&apos;s first tool call.</p>
         ) : (
           <ol className="divide-y divide-border">
-            {newest.map((e) => {
-              const t = actionText(e);
-              const blocked = e.decision === "block";
-              return (
-                <li key={e.id} className={isLive(e.id) ? "row-enter" : undefined}>
-                  <Link
-                    href={`/event/${e.id}`}
-                    className={`grid grid-cols-[auto_1fr_auto] items-start gap-x-4 gap-y-0.5 border-l-4 px-4 py-2.5 hover:bg-panel-raised stage:py-1.5 sm:grid-cols-[3.5rem_5.5rem_1fr_auto] sm:px-5 ${
-                      blocked ? "border-block bg-block-bg/60" : e.decision === "ask" ? "border-ask" : "border-transparent"
-                    }`}
-                  >
-                    <span className="font-mono text-base tabular-nums text-muted">
-                      {String(stepOf.get(e.id)).padStart(2, "0")}
-                    </span>
-                    <span className="font-mono text-base tabular-nums text-muted">
-                      +{formatClock(Math.max(0, e.ts - session.startedAt))}
-                    </span>
-                    {/* Phones: step, time and chip on one line, the action full width below */}
-                    <span className="order-last col-span-3 min-w-0 sm:order-none sm:col-span-1">
-                      <span className={`block text-xl ${e.kind === "source" ? "text-muted" : "text-foreground"}`}>
-                        {t.verb}
-                        {t.value && <span className={`ml-2 break-words font-bold ${blocked ? "text-block" : ""}`}>{t.value}</span>}
-                      </span>
-                      {e.kind !== "source" && <span className="block text-base text-muted sm:truncate">{e.reason}</span>}
-                    </span>
-                    <span className="justify-self-end">
-                      <DecisionChip decision={e.decision} />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
+            {newest.map((e) => (
+              <li key={e.id} className={isLive(e.id) ? "row-enter" : undefined}>
+                <Link href={`/event/${e.id}`} className={tapeRowClass(e.decision)}>
+                  <TapeRowContent
+                    step={stepOf.get(e.id) ?? 0}
+                    clock={`+${formatClock(Math.max(0, e.ts - session.startedAt))}`}
+                    event={e}
+                  />
+                </Link>
+              </li>
+            ))}
           </ol>
         )}
       </Panel>

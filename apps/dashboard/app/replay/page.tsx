@@ -6,11 +6,12 @@ import { Suspense } from "react";
 import { formatClock, type RecordingSummary } from "@/lib/replay";
 import { useRecordingList } from "@/lib/useReplay";
 import { OfflineBadge } from "@/components/OfflineBadge";
+import { Panel } from "@/components/Panel";
 
 /** Recent recordings, newest first. Falls back to public/recordings/index.json offline. */
 export default function ReplayListPage() {
   return (
-    <Suspense fallback={<p className="text-muted">Loading…</p>}>
+    <Suspense fallback={<p className="display-caps text-xl text-muted">Loading…</p>}>
       <ReplayList />
     </Suspense>
   );
@@ -22,68 +23,83 @@ function ReplayList() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Replay</h1>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="display-caps text-5xl">Replay</h1>
+          <p className="mt-1 text-lg text-muted">Saved runs, played back with their original timing. The stage backup if a live run stalls.</p>
+        </div>
         {list.status === "ready" && list.source === "file" && <OfflineBadge />}
       </div>
 
-      {list.status === "loading" && <p className="text-muted">Loading recordings…</p>}
+      {list.status === "loading" && <p className="display-caps text-xl text-muted">Loading tapes…</p>}
       {list.status === "error" && (
-        <p className="text-muted">
-          Can&apos;t reach Convex and there are no offline copies ({list.message}). Export one with{" "}
-          <code className="font-mono">pnpm record --export &lt;id&gt;</code>.
-        </p>
+        <Panel>
+          <h2 className="display-caps text-3xl">No tapes reachable</h2>
+          <p className="mt-2 text-lg text-muted">
+            Can&apos;t reach Convex and there are no offline copies ({list.message}). Export one with{" "}
+            <code className="font-mono text-foreground">pnpm record --export &lt;id&gt;</code>.
+          </p>
+        </Panel>
       )}
       {list.status === "ready" && list.data.length === 0 && (
-        <p className="text-muted">
-          No recordings yet. Save one with <code className="font-mono">pnpm tail --record</code> during a run, or{" "}
-          <code className="font-mono">pnpm record</code> after it.
-        </p>
+        <Panel>
+          <h2 className="display-caps text-3xl">No recordings yet</h2>
+          <p className="mt-2 text-lg text-muted">
+            Save one with <code className="font-mono text-foreground">pnpm tail --record</code> during a run, or{" "}
+            <code className="font-mono text-foreground">pnpm record</code> after it.
+          </p>
+        </Panel>
       )}
       {list.status === "ready" && list.data.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-          <table className="w-full text-left">
-            <thead className="border-b border-border text-xs uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-5 py-3 font-semibold">Recording</th>
-                <th className="px-3 py-3 font-semibold">Scenario</th>
-                <th className="px-3 py-3 font-semibold">Mode</th>
-                <th className="px-3 py-3 font-semibold">Backend</th>
-                <th className="px-3 py-3 text-right font-semibold">Events</th>
-                <th className="px-3 py-3 text-right font-semibold">Length</th>
-                <th className="px-5 py-3 font-semibold">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {list.data.map((r) => (
-                <Row key={r.id} r={r} file={list.source === "file"} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Panel title="Tapes" aside={`${list.data.length} saved`} bodyClassName="">
+          <ul className="divide-y divide-border">
+            {list.data.map((r) => (
+              <Row key={r.id} r={r} file={list.source === "file"} />
+            ))}
+          </ul>
+        </Panel>
       )}
     </div>
   );
 }
 
 function Row({ r, file }: { r: RecordingSummary; file: boolean }) {
-  const href = `/replay/${encodeURIComponent(r.id)}${file ? "?source=file" : ""}`;
+  const href = (autoplay: boolean) => {
+    const q = [file ? "source=file" : "", autoplay ? "autoplay=1" : ""].filter(Boolean).join("&");
+    return `/replay/${encodeURIComponent(r.id)}${q ? `?${q}` : ""}`;
+  };
+  const armed = r.mode === "enforce";
   return (
-    <tr className="hover:bg-background">
-      <td className="px-5 py-3">
-        <Link href={href} className="font-mono font-medium underline-offset-4 hover:underline">
+    <li className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3 hover:bg-panel-raised">
+      <span
+        className={`display-caps w-28 shrink-0 text-lg ${armed ? "text-block" : "text-muted"}`}
+        title={r.mode ? `mode ${r.mode}` : undefined}
+      >
+        {armed ? "Armed" : r.mode === "monitor" ? "Watching" : r.mode === "off" ? "Disarmed" : "—"}
+      </span>
+      <span className="min-w-0 flex-1">
+        <Link href={href(false)} className="block truncate font-mono text-lg text-foreground underline-offset-4 hover:underline">
           {r.id}
         </Link>
-        {r.truncated && <span className="ml-2 text-xs text-ask">truncated</span>}
-      </td>
-      <td className="px-3 py-3">{r.scenario ?? "—"}</td>
-      <td className="px-3 py-3">{r.mode ?? "—"}</td>
-      <td className="px-3 py-3 capitalize">{r.backend ?? "—"}</td>
-      <td className="px-3 py-3 text-right font-mono">{r.eventCount}</td>
-      <td className="px-3 py-3 text-right font-mono">{formatClock(r.durationMs)}</td>
-      <td className="px-5 py-3 text-sm text-muted">
-        {new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-      </td>
-    </tr>
+        <span className="block font-mono text-sm text-muted">
+          {[r.scenario, r.backend === "nessie" ? "Nessie" : r.backend, `${r.eventCount} calls`, formatClock(r.durationMs)]
+            .filter(Boolean)
+            .join(" · ")}
+          {" · "}
+          {new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+          {r.truncated && <span className="text-ask"> · truncated</span>}
+        </span>
+      </span>
+      <Link
+        href={href(true)}
+        className="display-caps flex h-11 items-center gap-2 border border-mark px-4 text-lg hover:border-foreground"
+        aria-label={`Play ${r.id}`}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden>
+          <path d="M3 2 L14 8 L3 14 Z" fill="currentColor" />
+        </svg>
+        Play
+      </Link>
+    </li>
   );
 }

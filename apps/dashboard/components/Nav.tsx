@@ -10,8 +10,8 @@ const LINKS = [
   { href: "/replay", label: "Replay" },
 ];
 
-/** Pages that draw their own beam (with the session's calls on it). */
-const OWN_BEAM = new Set(["/"]);
+/** Pages that draw their own beam with the calls on it: the live session and a replay. */
+const hasOwnBeam = (path: string) => path === "/" || /^\/replay\/[^/]+/.test(path);
 
 export function Nav() {
   const pathname = usePathname() ?? "/";
@@ -42,7 +42,7 @@ export function Nav() {
           ))}
         </nav>
       </div>
-      {!OWN_BEAM.has(pathname) && <Beam className="-mb-3" />}
+      {!hasOwnBeam(pathname) && <Beam className="-mb-3" />}
     </header>
   );
 }
