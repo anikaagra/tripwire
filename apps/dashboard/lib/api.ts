@@ -165,6 +165,19 @@ export interface RedteamRunDoc {
   finishedAt?: number;
   metrics?: unknown;
 }
+export interface AttackDoc {
+  _id: string;
+  _creationTime: number;
+  id: string;
+  runId: string;
+  carrier: string;
+  technique: string;
+  goal: string;
+  mode: Mode;
+  outcome: string; // "succeeded" | "blocked" | "asked" | "not_attempted" | "errored"
+  eventIds: string[];
+  sessionId?: string;
+}
 export interface EnvSnapshot {
   offsetMs: number;
   balance: number;
@@ -224,6 +237,7 @@ export const api = {
   },
   redteam: {
     recentRuns: query<{ limit?: number }, RedteamRunDoc[]>("redteam:recentRuns"),
+    attacksByRun: query<{ runId: string }, AttackDoc[]>("redteam:attacksByRun"),
   },
   envState: {
     byScenario: query<{ scenario: string }, EnvStateDoc | null>("envState:byScenario"),
