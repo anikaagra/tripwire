@@ -1,56 +1,246 @@
 @import "tailwindcss";
-
-:root {
-  --background: #fafafa;
-  --surface: #ffffff;
-  --foreground: #171717;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-
-  /* Decision colors — readable from the back row for the demo. */
-  --allow: #16a34a;
-  --allow-bg: #dcfce7;
-  --block: #dc2626;
-  --block-bg: #fee2e2;
-  --ask: #d97706;
-  --ask-bg: #fef3c7;
-}
+@import "./tokens.css";
 
 @theme inline {
   --color-background: var(--background);
-  --color-surface: var(--surface);
+  --color-panel: var(--panel);
+  --color-panel-raised: var(--panel-raised);
+  --color-surface: var(--panel); /* older pages use bg-surface */
+  --color-border: var(--border);
+  --color-mark: var(--mark);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
-  --color-border: var(--border);
   --color-allow: var(--allow);
   --color-allow-bg: var(--allow-bg);
   --color-block: var(--block);
   --color-block-bg: var(--block-bg);
   --color-ask: var(--ask);
   --color-ask-bg: var(--ask-bg);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-mono-face), ui-monospace, monospace;
+  --font-mono: var(--font-mono-face), ui-monospace, monospace;
+  --font-display: var(--font-display-face), "Arial Narrow", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --surface: #141414;
-    --foreground: #ededed;
-    --muted: #9ca3af;
-    --border: #27272a;
-
-    --allow: #4ade80;
-    --allow-bg: #052e16;
-    --block: #f87171;
-    --block-bg: #450a0a;
-    --ask: #fbbf24;
-    --ask-bg: #451a03;
+/* `stage:` utilities apply only in ?stage=1 (e.g. tighter spacing to offset the bigger text). */
+@custom-variant stage {
+  &:where([data-stage="1"] *) {
+    @slot;
   }
+}
+
+/* Condensed uppercase display type for headings, labels and big numbers. */
+@utility display-caps {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+html {
+  color-scheme: dark;
+  background: var(--background);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-mono);
+  font-size: 1.125rem; /* 18px: readable from the back row */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--block);
+  color: #000;
+}
+
+/* ------------------------------------------------------------------ texture */
+/* Faint scanlines over everything; off in ?stage=1. Never intercepts clicks. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(255 255 255 / var(--scanline-opacity)) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* ------------------------------------------------------------------ the beam */
+.beam-line {
+  height: var(--beam-width);
+  background: var(--beam);
+  box-shadow: var(--beam-glow);
+}
+
+.beam[data-state="ask"] .beam-line {
+  background: var(--ask);
+  box-shadow: var(--beam-glow-ask);
+  animation: beam-flicker 2.4s steps(1, end) infinite;
+}
+
+.beam[data-state="off"] .beam-line {
+  background: var(--mark);
+  box-shadow: none;
+}
+
+@keyframes beam-flicker {
+  0%, 100% { opacity: 1; }
+  8% { opacity: 0.35; }
+  10% { opacity: 1; }
+  46% { opacity: 0.6; }
+  48% { opacity: 1; }
+  71% { opacity: 0.25; }
+  72% { opacity: 0.9; }
+  74% { opacity: 0.4; }
+  76% { opacity: 1; }
+}
+
+/* The two ends at a cut whip apart, overshoot, and settle; one motion. */
+.recoil.beam-end-left {
+  animation: recoil-left 560ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.recoil.beam-end-right {
+  animation: recoil-right 560ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes recoil-left {
+  0% { transform: translateX(10px); filter: brightness(2.5); }
+  30% { transform: translateX(-8px) translateY(-2px); }
+  60% { transform: translateX(2px); }
+  100% { transform: none; filter: none; }
+}
+@keyframes recoil-right {
+  0% { transform: translateX(-10px); filter: brightness(2.5); }
+  30% { transform: translateX(8px) translateY(2px); }
+  60% { transform: translateX(-2px); }
+  100% { transform: none; filter: none; }
+}
+
+/* Glowing caps on the cut ends, and the red-hot stubs leading into them. */
+.beam-cap {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: #ffb4a8;
+  box-shadow: 0 0 8px 3px rgb(255 42 42 / 0.9);
+}
+.beam-stub {
+  top: 50%;
+  height: calc(var(--beam-width) + 1px);
+  transform: translateY(-50%);
+  background: var(--block);
+  box-shadow: var(--beam-glow);
+}
+
+/* Sparks fly from the break once. Each spark sets --dx / --dy. */
+.spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 9999px;
+  background: #ffd2c2;
+  box-shadow: 0 0 6px 2px rgb(255 42 42 / 0.9);
+  opacity: 0;
+}
+.beam-snap .spark {
+  animation: spark 820ms cubic-bezier(0.1, 0.7, 0.3, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes spark {
+  0% { opacity: 1; transform: translate(0, 0) scale(1.2); }
+  70% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); }
+}
+
+.beam-flash {
+  opacity: 0;
+}
+.beam-snap .beam-flash {
+  animation: flash 380ms ease-out both;
+}
+@keyframes flash {
+  0% { opacity: 1; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(2.4); }
+}
+
+/* Screen edges pulse red once when a block arrives. */
+.edge-pulse {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  animation: edge-pulse 1100ms ease-out both;
+}
+@keyframes edge-pulse {
+  0% { box-shadow: inset 0 0 0 0 rgb(255 42 42 / 0); }
+  18% { box-shadow: inset 0 0 0 6px rgb(255 42 42 / 0.9), inset 0 0 120px 20px rgb(255 42 42 / 0.35); }
+  100% { box-shadow: inset 0 0 0 0 rgb(255 42 42 / 0); }
+}
+
+/* New tape rows slide out from under the beam. */
+.row-enter {
+  animation: row-enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes row-enter {
+  from { opacity: 0; transform: translateY(-14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------------ UV reveal */
+/* The planted sentence, lit red as if under a UV lamp. */
+.uv-reveal {
+  color: #ff5a4f;
+  background: rgb(255 42 42 / 0.14);
+  box-shadow: 0 0 0 2px rgb(255 42 42 / 0.14);
+  text-shadow: 0 0 10px rgb(255 42 42 / 0.55);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ------------------------------------------------------------------ rolling counter */
+.odo-digit {
+  display: inline-block;
+  height: 1em;
+  line-height: 1;
+  overflow: hidden;
+  vertical-align: top;
+}
+.odo-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--odo-ms, 1200ms) cubic-bezier(0.25, 0.9, 0.3, 1.04);
+}
+.odo-strip > span {
+  height: 1em;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------------ reduced motion */
+/* End states only: the beam stays broken, numbers jump to their final value. */
+@media (prefers-reduced-motion: reduce) {
+  .beam[data-state="ask"] .beam-line,
+  .recoil,
+  .beam-snap .spark,
+  .beam-snap .beam-flash,
+  .row-enter {
+    animation: none;
+  }
+  .edge-pulse {
+    display: none;
+  }
+  .odo-strip {
+    transition: none;
+  }
 }

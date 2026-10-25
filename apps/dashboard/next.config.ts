@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   // benefits from static prerendering, so Cache Components (which flags
   // dynamic params/data as blocking prerendering) just adds dev-mode noise.
   agentRules: false,
+  // No Next.js dev badge in the corner of the projector.
+  devIndicators: false,
   turbopack: {
     rules: {
       "*.css": {
