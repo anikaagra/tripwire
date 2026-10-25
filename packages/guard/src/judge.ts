@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { JUDGE_SYSTEM_PROMPT, buildJudgeMessage } from "./prompt.js";
+import { VerdictCache, cacheKey } from "./verdictCache.js";
 import type { GuardInput, GuardVerdict } from "@tripwire/shared";
 
 export const JUDGE_MODEL = "claude-haiku-5-5";
@@ -12,6 +13,11 @@ export const JUDGE_MAX_TOKENS = 150;
 export const DEFAULT_ATTEMPT_TIMEOUT_MS = 2500;
 /** First try plus one retry, per the design doc. */
 export const DEFAULT_MAX_ATTEMPTS = 2;
+/**
+ * If the first request hasn't answered by then, send the retry alongside it
+ * and take whichever answers first (instead of waiting out the full timeout).
+ */
+export const DEFAULT_BACKUP_AFTER_MS = 1200;
 
 export const FAIL_CLOSED_REASON =
   "Tripwire couldn't check this action automatically, so it needs your approval.";
@@ -37,13 +43,20 @@ export interface JudgeResult extends GuardVerdict {
   latencyMs: number;
   /** Set when the judge failed closed (error, timeout, refusal, bad JSON). */
   error?: string;
+  /** Set when the answer came from an identical earlier (or in-flight) call. */
+  cached?: true;
 }
 
 export interface JudgeOptions {
   client?: JudgeClient;
   attemptTimeoutMs?: number;
   maxAttempts?: number;
+  backupAfterMs?: number;
+  /** Defaults to one shared in-memory cache; pass false to always call Haiku (evals). */
+  cache?: VerdictCache | false;
 }
+
+const defaultCache = new VerdictCache();
 
 const VerdictSchema = z.object({
   requested: z.enum(["yes", "no", "unclear"]),
@@ -104,12 +117,15 @@ function parseVerdict(response: Anthropic.Message): z.infer<typeof VerdictSchema
   return parsed.data;
 }
 
+type Verdict = z.infer<typeof VerdictSchema>;
+
+/** One request to Haiku. `controller` lets the caller cancel it once another request wins. */
 async function askOnce(
   client: JudgeClient,
   input: GuardInput,
   timeoutMs: number,
-): Promise<z.infer<typeof VerdictSchema>> {
-  const controller = new AbortController();
+  controller: AbortController,
+): Promise<Verdict> {
   const timedOut = new Promise<never>((_, reject) => {
     controller.signal.addEventListener(
       "abort",
@@ -136,7 +152,7 @@ async function askOnce(
           },
           messages: [{ role: "user", content: buildJudgeMessage(input) }],
         },
-        // We do our own single retry, so turn off the SDK's.
+        // We do our own retry, so turn off the SDK's.
         { signal: controller.signal, timeout: timeoutMs, maxRetries: 0 },
       ),
       timedOut,
@@ -148,10 +164,78 @@ async function askOnce(
 }
 
 /**
+ * Sends the first request; the retry goes out either right away when the
+ * first fails, or as a backup once the first is slower than backupAfterMs.
+ * The first good answer wins and the other request is cancelled.
+ */
+function askWithBackup(
+  client: JudgeClient,
+  input: GuardInput,
+  timeoutMs: number,
+  maxAttempts: number,
+  backupAfterMs: number,
+): Promise<Verdict> {
+  return new Promise((resolve, reject) => {
+    const controllers: AbortController[] = [];
+    let failed = 0;
+    let settled = false;
+    let backupTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const finish = (done: () => void) => {
+      settled = true;
+      clearTimeout(backupTimer);
+      for (const c of controllers) c.abort();
+      done();
+    };
+
+    const launch = () => {
+      if (settled || controllers.length >= maxAttempts) return;
+      const controller = new AbortController();
+      controllers.push(controller);
+      askOnce(client, input, timeoutMs, controller).then(
+        (verdict) => {
+          if (!settled) finish(() => resolve(verdict));
+        },
+        (err: unknown) => {
+          if (settled) return;
+          failed++;
+          if (!isNonRetryable(err) && controllers.length < maxAttempts) {
+            launch();
+          } else if (failed >= controllers.length) {
+            finish(() => reject(err));
+          }
+        },
+      );
+    };
+
+    launch();
+    if (maxAttempts > 1) backupTimer = setTimeout(launch, backupAfterMs);
+  });
+}
+
+/** Calls Haiku (with backup/retry) and turns any failure into the fail-closed verdict. */
+async function evaluate(input: GuardInput, options: JudgeOptions): Promise<GuardVerdict & { error?: string }> {
+  try {
+    const client = options.client ?? getDefaultClient();
+    return await askWithBackup(
+      client,
+      input,
+      options.attemptTimeoutMs ?? DEFAULT_ATTEMPT_TIMEOUT_MS,
+      options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
+      options.backupAfterMs ?? DEFAULT_BACKUP_AFTER_MS,
+    );
+  } catch (err) {
+    const error = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    return { requested: "unclear", reason: FAIL_CLOSED_REASON, error };
+  }
+}
+
+/**
  * Ask Claude Haiku whether the user actually requested this tool call.
  *
  * Fails closed: any error, timeout, refusal, or unparseable answer returns
  * requested: "unclear" (which decide() turns into ask or block), never "yes".
+ * Identical calls reuse an earlier real answer (see VerdictCache).
  */
 export async function judge(
   input: GuardInput,
@@ -159,25 +243,26 @@ export async function judge(
 ): Promise<JudgeResult> {
   const start = performance.now();
   const elapsed = () => Math.round(performance.now() - start);
-  const timeoutMs = options.attemptTimeoutMs ?? DEFAULT_ATTEMPT_TIMEOUT_MS;
-  const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
+  const cache = options.cache === false ? undefined : (options.cache ?? defaultCache);
+  if (!cache) return { ...(await evaluate(input, options)), latencyMs: elapsed() };
 
-  let lastError = "no attempts made";
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const client = options.client ?? getDefaultClient();
-      const { requested, reason } = await askOnce(client, input, timeoutMs);
-      return { requested, reason, latencyMs: elapsed() };
-    } catch (err) {
-      lastError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-      if (isNonRetryable(err)) break;
-    }
+  const key = cacheKey(JUDGE_MODEL, JUDGE_SYSTEM_PROMPT, buildJudgeMessage(input));
+  const hit = cache.get(key);
+  if (hit) return { ...hit, latencyMs: elapsed(), cached: true };
+
+  const pending = cache.inflight.get(key);
+  if (pending) {
+    const shared = await pending;
+    return { ...shared, latencyMs: elapsed(), ...(shared.error ? {} : { cached: true as const }) };
   }
 
-  return {
-    requested: "unclear",
-    reason: FAIL_CLOSED_REASON,
-    latencyMs: elapsed(),
-    error: lastError,
-  };
+  const run = evaluate(input, options);
+  cache.inflight.set(key, run);
+  try {
+    const result = await run;
+    if (!result.error) cache.set(key, { requested: result.requested, reason: result.reason });
+    return { ...result, latencyMs: elapsed() };
+  } finally {
+    cache.inflight.delete(key);
+  }
 }

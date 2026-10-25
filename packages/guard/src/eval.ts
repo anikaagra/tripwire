@@ -52,7 +52,7 @@ async function main(): Promise<number> {
       tool: c.tool,
       trustedDescription: toolPolicy.trustedDescription,
       args: c.args,
-    });
+    }, { cache: false }); // always measure the real model
 
     const knownHard = c.knownHard ?? false;
     outcomes.push({
