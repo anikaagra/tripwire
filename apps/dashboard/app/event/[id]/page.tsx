@@ -5,19 +5,22 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { DecisionChip } from "@/components/DecisionChip";
 import { formatUsd } from "@/lib/format";
+// Direct path to the pure highlighter: the @tripwire/guard index also pulls in
+// the judge and the Anthropic SDK, which don't belong in the browser.
+import { highlightTaint, type Highlight } from "@guard/highlight";
 
 /**
- * Deliberately a stub for the highlighted-source view: highlightSpanId/
- * highlightText (Nila's explanation work) don't exist yet, so this shows
- * the plain untrusted span text for the first taint hit instead of
- * guessing at a highlighting format that isn't settled. Swap this for the
- * real highlighter once those fields land on ToolCallEvent.
+ * Highlights the injected sentence client-side with Nila's highlightTaint,
+ * from the first taint hit's span, so no extra fields are stored on the
+ * event. Falls back to the plain span text if the value can't be located.
  */
 export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const event = useQuery(api.events.eventById, { eventId: id });
   const firstTaintSpanId = event?.taintHits[0]?.spanId;
   const span = useQuery(api.spans.spanById, firstTaintSpanId ? { spanId: firstTaintSpanId } : "skip");
+
+  const highlight: Highlight | null = event && span ? highlightTaint(event.taintHits[0]!, span) : null;
 
   if (event === undefined) return <p className="text-muted">Loading…</p>;
   if (event === null) return <p className="text-muted">No event with that id.</p>;
@@ -67,10 +70,28 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
           <div className="text-xs uppercase tracking-wide text-muted">
             Source — {span.server}__{span.tool} ({span.itemId})
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            Highlighting of the exact injected sentence is coming soon. Full untrusted text below:
+          {highlight ? (
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              The <span className="font-mono text-block">{event.taintHits[0]!.argKey}</span> value came from this
+              sentence{highlight.hidden ? ", which was hidden from you" : ""}
+              {highlight.hiddenHow ? ` (${highlight.hiddenHow})` : ""}:
+            </p>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-muted">Full untrusted text:</p>
+          )}
+          <p className="mt-2 whitespace-pre-wrap rounded bg-background p-3 text-sm">
+            {highlight ? (
+              <>
+                {span.text.slice(0, highlight.start)}
+                <mark className="rounded bg-block-bg px-0.5 font-semibold text-block">
+                  {span.text.slice(highlight.start, highlight.end)}
+                </mark>
+                {span.text.slice(highlight.end)}
+              </>
+            ) : (
+              span.text
+            )}
           </p>
-          <p className="mt-2 whitespace-pre-wrap rounded bg-background p-3 text-sm">{span.text}</p>
         </div>
       )}
 
