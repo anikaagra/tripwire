@@ -110,12 +110,14 @@ export class Pipeline {
     tool: string;
     qualifiedTool: string;
     args: Record<string, unknown>;
+    /** Args as the rules engine sees them, e.g. pay_bill plus the bill's looked-up amountCents. Defaults to args. */
+    ruleArgs?: Record<string, unknown>;
   }): Promise<SinkDecisionResult> {
     const start = this.now();
     const session = this.deps.sessions.getOrCreate(input.sessionId, "enforce");
     const policy = this.deps.policyResolver.resolve(input.qualifiedTool);
 
-    const ruleResult = evaluateRules(policy, input.args);
+    const ruleResult = evaluateRules(policy, input.ruleArgs ?? input.args);
     const spans = this.deps.spanStore.getSpansForSession(input.sessionId);
     const taintHits = checkTaint(input.args, spans, session.intent);
 

@@ -4,6 +4,7 @@ import type { PolicyResolver } from "./policyResolver.js";
 import type { RegisteredTool } from "./upstream.js";
 import type { Pipeline } from "./pipeline.js";
 import { deriveItemId, extractNessieId, extractSpanContent } from "./spanContent.js";
+import { PAY_BILL_TOOL, withBillAmount } from "./billAmount.js";
 
 export interface BuildMcpServerDeps {
   registry: Map<string, RegisteredTool>;
@@ -52,6 +53,7 @@ export function buildMcpServer(deps: BuildMcpServerDeps): Server {
         tool: tool.bareName,
         qualifiedTool: name,
         args,
+        ruleArgs: name === PAY_BILL_TOOL ? await withBillAmount(registry, args) : undefined,
       });
       sinkEventId = result.eventId;
       if (result.decision !== "allow") {

@@ -42,6 +42,10 @@ tools:
     kind: sink
     risk: high
     trustedDescription: Pays one of the user's own pending bills in full, from the user's checking account to the bill's payee.
+    rules:
+      # The proxy looks up the bill's amount (pay_bill only takes bill_id), so a
+      # larger-than-usual bill escalates to an ask instead of paying silently.
+      maxAmountCents: 30000
 
   bank__transfer:
     kind: sink
