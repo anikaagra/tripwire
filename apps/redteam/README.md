@@ -75,17 +75,17 @@ zero). State both in the pitch; don't imply the model wired the money on its own
 
 ## The 'ask' scenario (`scenarios/bill-pay-large.json`)
 
-A benign larger-than-usual electricity bill ($1,284.50) with no injection, for the demo's
-"when Tripwire isn't sure, it asks you" beat. The bank now seeds balance and bills from the
-scenario's `bank` section. For the guard to ASK (not block) on this legitimate large payment,
-the policy needs a `pay_bill` amount-escalate rule — proposed snippet for Anika G's
-`tripwire.policy.yaml`:
+A benign larger-than-usual electricity bill ($486, vs the usual $142) with no injection, for the demo's
+"when Tripwire isn't sure, it asks you" beat. The inbox email comes from `scenarios/bill-pay-large.json`
+and the bank's balance and bill from `scenarios/bank/bill-pay-large.json`. The guard asks (not blocks)
+on this legitimate payment because of the `pay_bill` rule in `tripwire.policy.yaml`:
 
 ```yaml
   bank__pay_bill:
     kind: sink
     risk: high
-    trustedDescription: Pays one of the user's own pending bills in full, from the user's checking account to the bill's payee.
     rules:
-      escalateOverAmountCents: 30000    # bills over $300 -> escalate -> ask (the $486 large bill trips it; the ~$142 normal bill doesn't)
+      maxAmountCents: 30000   # bills over $300 escalate -> ask (the $486 bill trips it; the $142 bill doesn't)
 ```
+
+The proxy looks up the bill's amount itself, since `pay_bill` only takes `bill_id`.
