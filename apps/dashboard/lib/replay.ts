@@ -2,11 +2,28 @@
  * Replay logic for /replay (pure, no React). A recording is a saved run:
  * events and bank-state samples, each at its original offset from the start.
  * Owner: Asmi.
+ *
+ * Recording mirrors convex/schema.ts's `recording` validator by hand rather
+ * than importing it (Infer<typeof recording>): convex/ lives two levels
+ * above apps/dashboard, outside what a fresh Vercel build uploads for this
+ * project's Root Directory. See lib/api.ts for the same constraint on the
+ * generated Convex api object.
  */
-import type { Infer } from "convex/values";
-import type { recording } from "../../../convex/schema";
+import type { Backend, EnvSnapshot, Mode, ToolCallEventShape } from "./api";
 
-export type Recording = Infer<typeof recording>;
+export interface Recording {
+  id: string;
+  runId: string;
+  sessionId?: string;
+  createdAt: number;
+  intent?: string;
+  mode?: Mode;
+  scenario?: string;
+  backend?: Backend;
+  events: { offsetMs: number; event: ToolCallEventShape }[];
+  envStates?: EnvSnapshot[];
+  truncated?: boolean;
+}
 export type RecordedEvent = Recording["events"][number]["event"];
 export type EnvPoint = NonNullable<Recording["envStates"]>[number];
 

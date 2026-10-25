@@ -7,7 +7,7 @@
  */
 import { useQuery } from "convex/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api } from "@convex/_generated/api";
+import { api } from "@/lib/api";
 import { normalizeRecording, type Recording, type RecordingSummary } from "./replay";
 
 /** How long to wait for Convex before switching to the offline copy. */

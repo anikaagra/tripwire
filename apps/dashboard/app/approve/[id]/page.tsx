@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
+import { api } from "@/lib/api";
 import { Beam } from "@/components/Beam";
 import { DecisionIcon } from "@/components/DecisionChip";
 import { HoldButton } from "@/components/HoldButton";
