@@ -5,6 +5,7 @@ import type { EventLog } from "../eventLog.js";
 
 const recordEvent = makeFunctionReference<"mutation">("events:record");
 const setNessieIdFn = makeFunctionReference<"mutation">("events:setNessieId");
+const updateDecisionFn = makeFunctionReference<"mutation">("events:updateDecision");
 
 /**
  * Writes events to the shared Convex deployment (convex/events.ts). Never
@@ -27,6 +28,14 @@ export class ConvexEventLog implements EventLog {
       await this.client.mutation(setNessieIdFn, { id: eventId, nessieId });
     } catch (err) {
       console.error(`[tripwire] Convex nessieId patch failed: ${(err as Error).message}`);
+    }
+  }
+
+  async updateDecision(eventId: string, decision: ToolCallEvent["decision"], reason: string): Promise<void> {
+    try {
+      await this.client.mutation(updateDecisionFn, { id: eventId, decision, reason });
+    } catch (err) {
+      console.error(`[tripwire] Convex decision patch failed: ${(err as Error).message}`);
     }
   }
 }

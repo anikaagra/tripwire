@@ -43,6 +43,18 @@ export const setNessieId = mutation({
   },
 });
 
+export const updateDecision = mutation({
+  args: { id: v.string(), decision: decisionValidator, reason: v.string() },
+  handler: async (ctx, { id, decision, reason }) => {
+    const existing = await ctx.db
+      .query("events")
+      .withIndex("by_record_id", (q) => q.eq("id", id))
+      .unique();
+    if (!existing) throw new Error(`No event ${id}`);
+    await ctx.db.patch(existing._id, { decision, reason });
+  },
+});
+
 export const eventsBySession = query({
   args: { sessionId: v.string() },
   handler: async (ctx, { sessionId }) => {

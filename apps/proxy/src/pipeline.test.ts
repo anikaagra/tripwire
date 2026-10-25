@@ -20,9 +20,13 @@ const policyFile: PolicyFile = {
 
 class FakeApprovals implements ApprovalBackend {
   public created: string[] = [];
-  constructor(private readonly resolution: ApprovalRecord["status"]) {}
+  constructor(
+    private readonly resolution: ApprovalRecord["status"],
+    private readonly onCreatePending?: (eventId: string) => void
+  ) {}
   async createPending(eventId: string): Promise<ApprovalRecord> {
     this.created.push(eventId);
+    this.onCreatePending?.(eventId);
     return { id: "appr_0", eventId, status: "pending", createdAt: Date.now() };
   }
   async get(id: string): Promise<ApprovalRecord | undefined> {
@@ -45,6 +49,13 @@ class RecordingEventLog implements EventLog {
   async setNessieId(eventId: string, nessieId: string): Promise<void> {
     this.nessiePatches.push({ eventId, nessieId });
   }
+  async updateDecision(eventId: string, decision: Parameters<EventLog["record"]>[0]["decision"], reason: string): Promise<void> {
+    const event = this.events.find((e) => e.id === eventId);
+    if (event) {
+      event.decision = decision;
+      event.reason = reason;
+    }
+  }
 }
 
 // Pipeline defaults to @tripwire/guard's judge(), which calls the real
@@ -57,8 +68,8 @@ async function fakeUnclearJudge() {
 function buildPipeline(opts: { approvalResolution?: ApprovalRecord["status"] } = {}) {
   const spanStore = new SpanStore();
   const sessions = new SessionStore();
-  const approvals = new FakeApprovals(opts.approvalResolution ?? "approved");
   const eventLog = new RecordingEventLog();
+  const approvals = new FakeApprovals(opts.approvalResolution ?? "approved");
   const pipeline = new Pipeline({
     policyResolver: new PolicyResolver(policyFile),
     spanStore,
@@ -175,5 +186,53 @@ describe("Pipeline.decideSinkCall", () => {
 
     expect(result.decision).toBe("allow");
     expect(eventLog.events[0]?.reason).toContain("[monitor]");
+  });
+
+  it("logs the event with decision 'ask' before the approval wait begins, not only after", async () => {
+    // Regression: the dashboard's /approve page reads the event for context
+    // while the approval is still pending. If the event were logged only
+    // after waitForDecision resolves (as it originally was), that row
+    // wouldn't exist yet during exactly the window a human needs it.
+    const spanStore = new SpanStore();
+    const sessions = new SessionStore();
+    const eventLog = new RecordingEventLog();
+    let eventStateAtCreatePending: string | undefined;
+    const approvals: ApprovalBackend = {
+      async createPending(eventId) {
+        eventStateAtCreatePending = eventLog.events.find((e) => e.id === eventId)?.decision;
+        return { id: "appr_0", eventId, status: "pending", createdAt: Date.now() };
+      },
+      async get(id) {
+        return { id, eventId: "evt", status: "approved", createdAt: Date.now() };
+      },
+      async decide(id, status) {
+        return { id, eventId: "evt", status, createdAt: Date.now(), decidedAt: Date.now() };
+      },
+      async waitForDecision(id) {
+        return { id, eventId: "evt", status: "approved", createdAt: Date.now(), decidedAt: Date.now() };
+      },
+    };
+    const pipeline = new Pipeline({
+      policyResolver: new PolicyResolver(policyFile),
+      spanStore,
+      sessions,
+      approvals,
+      eventLog,
+      judge: fakeUnclearJudge,
+      approvalTimeoutMs: 1000,
+    });
+    sessions.setIntent("s7", "Pay the electricity bill using bay-electric.", "enforce");
+
+    await pipeline.decideSinkCall({
+      sessionId: "s7",
+      server: "bank",
+      tool: "transfer",
+      qualifiedTool: "bank__transfer",
+      args: { to_account: "bay-electric", amount: 100 },
+    });
+
+    expect(eventStateAtCreatePending).toBe("ask");
+    // ...and ends up patched to the final outcome afterward.
+    expect(eventLog.events[0]?.decision).toBe("allow");
   });
 });

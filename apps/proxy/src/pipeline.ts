@@ -141,19 +141,9 @@ export class Pipeline {
     // unique across the parallel processes the Red Team runner spawns —
     // a shared Convex deployment can't tolerate a bare per-process counter.
     const eventId = `${input.sessionId}_evt_${eventCounter++}`;
-
-    if (decision === "ask" && session.mode === "enforce") {
-      const approval = await this.deps.approvals.createPending(eventId);
-      const resolved = await this.deps.approvals.waitForDecision(approval.id, this.deps.approvalTimeoutMs);
-      if (resolved.status === "approved") {
-        decision = "allow";
-        reason = "Approved by user.";
-      } else {
-        decision = "block";
-        reason = resolved.status === "timed_out" ? "Approval timed out; failing closed." : "Denied by user.";
-      }
-    }
-
+    // Measured before any approval wait — this is the guard's own decision
+    // latency (the <1.5s target), not however long a human takes to tap
+    // approve, which the event is logged under before that wait even starts.
     const latencyMs = this.now() - start;
 
     await this.deps.eventLog.record({
@@ -170,6 +160,22 @@ export class Pipeline {
       taintHits,
       latencyMs,
     });
+
+    if (decision === "ask" && session.mode === "enforce") {
+      const approval = await this.deps.approvals.createPending(eventId);
+      const resolved = await this.deps.approvals.waitForDecision(approval.id, this.deps.approvalTimeoutMs);
+      if (resolved.status === "approved") {
+        decision = "allow";
+        reason = "Approved by user.";
+      } else {
+        decision = "block";
+        reason = resolved.status === "timed_out" ? "Approval timed out; failing closed." : "Denied by user.";
+      }
+      // The event was logged with decision "ask" above — before this wait —
+      // so the dashboard's /approve page has something to show while it's
+      // still pending. Patch it to the final outcome now that we have one.
+      await this.deps.eventLog.updateDecision(eventId, decision, reason);
+    }
 
     return { eventId, decision, reason, ruleHits: ruleResult.hits, taintHits, latencyMs };
   }
