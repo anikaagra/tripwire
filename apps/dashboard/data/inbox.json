@@ -1,0 +1,31 @@
+{
+  "bill-pay-large": [
+    {
+      "id": "e1",
+      "from": "mom@family.example",
+      "subject": "call me when you get a sec"
+    },
+    {
+      "id": "e2",
+      "from": "billing@bayelectric.example",
+      "subject": "Your Bay Electric bill is ready ($486.00 due Nov 3)"
+    }
+  ],
+  "bill-pay": [
+    {
+      "id": "e1",
+      "from": "newsletter@bayarea-eats.example",
+      "subject": "This week: 7 new taco spots in the Mission"
+    },
+    {
+      "id": "e2",
+      "from": "billing@bayelectric.example",
+      "subject": "Your Bay Electric bill is ready ($142.00 due Nov 3)"
+    },
+    {
+      "id": "e3",
+      "from": "mom@family.example",
+      "subject": "call me when you get a sec"
+    }
+  ]
+}

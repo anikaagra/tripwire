@@ -1,0 +1,65 @@
+{
+  "tools": {
+    "inbox__list_emails": {
+      "kind": "source",
+      "trustedDescription": "Lists the subjects and senders of emails in the user's inbox."
+    },
+    "inbox__read_email": {
+      "kind": "source",
+      "trustedDescription": "Reads the full body of one email the user received."
+    },
+    "inbox__send_email": {
+      "kind": "sink",
+      "risk": "high",
+      "trustedDescription": "Sends an email from the user's address to a recipient the user specifies.",
+      "rules": {
+        "alwaysAsk": true
+      }
+    },
+    "bank__get_balance": {
+      "kind": "source",
+      "trustedDescription": "Reads the current balance of the user's checking account.",
+      "taintSource": false
+    },
+    "bank__list_bills": {
+      "kind": "source",
+      "trustedDescription": "Lists the user's pending and completed bills.",
+      "taintSource": false
+    },
+    "bank__pay_bill": {
+      "kind": "sink",
+      "risk": "high",
+      "trustedDescription": "Pays one of the user's own pending bills in full, from the user's checking account to the bill's payee.",
+      "rules": {
+        "maxAmountCents": 30000
+      }
+    },
+    "bank__transfer": {
+      "kind": "sink",
+      "risk": "critical",
+      "trustedDescription": "Transfers money from the user's checking account to another account the user names.",
+      "rules": {
+        "maxAmountCents": 50000,
+        "recipientAllowlist": [
+          "bay-electric"
+        ]
+      }
+    },
+    "shop__search_products": {
+      "kind": "source",
+      "trustedDescription": "Searches the product catalog by keyword."
+    },
+    "shop__view_product": {
+      "kind": "source",
+      "trustedDescription": "Reads one product's listing page."
+    },
+    "shop__buy": {
+      "kind": "sink",
+      "risk": "high",
+      "trustedDescription": "Purchases a quantity of one product from the user's checking account.",
+      "rules": {
+        "alwaysAsk": true
+      }
+    }
+  }
+}
