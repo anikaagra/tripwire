@@ -9,6 +9,7 @@
   },
   "scripts": {
     "agent": "tsx apps/agent/src/index.ts",
+    "demo:reset": "tsx apps/agent/src/demoReset.ts",
     "inbox": "tsx apps/mock-servers/inbox/src/index.ts",
     "bank": "tsx apps/mock-servers/bank/src/index.ts",
     "proxy": "pnpm --filter @tripwire/proxy start",
