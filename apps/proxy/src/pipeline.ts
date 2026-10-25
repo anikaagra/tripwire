@@ -165,6 +165,7 @@ export class Pipeline {
 
     if (decision === "ask" && session.mode === "enforce") {
       const approval = await this.deps.approvals.createPending(eventId);
+      console.error(`[tripwire] waiting for approval ${approval.id} (pnpm tripwire:approve ${approval.id})`);
       const resolved = await this.deps.approvals.waitForDecision(approval.id, this.deps.approvalTimeoutMs);
       if (resolved.status === "approved") {
         decision = "allow";
