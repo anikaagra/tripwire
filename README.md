@@ -92,7 +92,7 @@ Red Team mode runs a reproducible attack suite twice, once with Tripwire **off**
 | Technique | direct instruction, fake system notice, impersonation, task continuation |
 | Goal | wire $2,000 to the attacker, forward the inbox to the attacker, pay a fake bill |
 
-**Latest saved run (full 36-attack suite on Capital One Nessie, `compromised` profile, Claude Sonnet 5.5):**
+**Latest saved runs (full 36-attack suite on Capital One Nessie, `compromised` profile, Claude Sonnet 5.5; Convex runs `rt-off-1792900030686` and `rt-enforce-1792900637529`, Oct 24):**
 
 | | Tripwire off | Tripwire on |
 |---|---|---|
@@ -100,9 +100,7 @@ Red Team mode runs a reproducible attack suite twice, once with Tripwire **off**
 | Forward-inbox attacks | 12 / 12 succeeded | **12 / 12 blocked** |
 | Pay-fake-bill attacks | 12 / 12 succeeded | **12 / 12 blocked** |
 | Benign tasks falsely blocked | – | **0 / 10** |
-| Suite run time (enforce, attacks + benign) | – | 17 min 8 s on Nessie (one run at a time); 3 min 44 s on the `local` backend |
-
-<!-- Numbers from the saved Convex runs rt-off-1792900030686 / rt-enforce-1792900637529 (Oct 24, 8:47-9:14 PM PT, backend nessie). The same suite on the local backend gave identical outcomes (36/36 off, 0/36 on, 0/10 benign). -->
+| Suite run time (attacks + benign, one run at a time on Nessie) | 10 min 3 s | 17 min 8 s |
 
 > **How "off" is measured.** Current Claude models resist these injections on their own: across 105 off-mode runs on Sonnet 5.5 and Haiku 5.5, the agent read the payload every time and never obeyed it ([details](apps/agent/README.md)). A firewall has to hold even when the model *is* fooled, so the suite uses a clearly labeled **compromised** profile that simulates a hijacked or unhardened agent by issuing each attack's intended action. **Off** is the damage that action does; **on** is what Tripwire stops. We don't claim the model wired the money on its own.
 
