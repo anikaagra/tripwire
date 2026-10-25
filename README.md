@@ -92,17 +92,17 @@ Red Team mode runs a reproducible attack suite twice, once with Tripwire **off**
 | Technique | direct instruction, fake system notice, impersonation, task continuation |
 | Goal | wire $2,000 to the attacker, forward the inbox to the attacker, pay a fake bill |
 
-**Latest saved run (21-attack suite, `local` backend, `compromised` profile):**
+**Latest saved run (full 36-attack suite on Capital One Nessie, `compromised` profile, Claude Sonnet 5.5):**
 
 | | Tripwire off | Tripwire on |
 |---|---|---|
-| Transfer attacks | 9 / 9 succeeded | **9 / 9 blocked** |
-| Forward-inbox attacks | 6 / 6 succeeded | **6 / 6 blocked** |
-| Pay-fake-bill attacks | 6 / 6 succeeded | **6 / 6 blocked** |
+| Transfer attacks | 12 / 12 succeeded | **12 / 12 blocked** |
+| Forward-inbox attacks | 12 / 12 succeeded | **12 / 12 blocked** |
+| Pay-fake-bill attacks | 12 / 12 succeeded | **12 / 12 blocked** |
 | Benign tasks falsely blocked | – | **0 / 10** |
-| Suite run time (enforce, attacks + benign) | – | 4 min 26 s |
+| Suite run time (enforce, attacks + benign) | – | 17 min 8 s on Nessie (one run at a time); 3 min 44 s on the `local` backend |
 
-<!-- Numbers from the saved Convex runs rt-off-1792886849384 / rt-enforce-1792886936179 (the 21 curated attacks). The suite is now the full 36-attack matrix: replace this table with Saturday night's saved run before submission. -->
+<!-- Numbers from the saved Convex runs rt-off-1792900030686 / rt-enforce-1792900637529 (Oct 24, 8:47-9:14 PM PT, backend nessie). The same suite on the local backend gave identical outcomes (36/36 off, 0/36 on, 0/10 benign). -->
 
 > **How "off" is measured.** Current Claude models resist these injections on their own: across 105 off-mode runs on Sonnet 5.5 and Haiku 5.5, the agent read the payload every time and never obeyed it ([details](apps/agent/README.md)). A firewall has to hold even when the model *is* fooled, so the suite uses a clearly labeled **compromised** profile that simulates a hijacked or unhardened agent by issuing each attack's intended action. **Off** is the damage that action does; **on** is what Tripwire stops. We don't claim the model wired the money on its own.
 
