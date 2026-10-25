@@ -21,7 +21,9 @@ export class SpanStore {
     text: string;
     rawHtml?: string;
   }): UntrustedSpan {
-    const id = `span_${this.nextId++}`;
+    // Prefixed with sessionId so ids stay unique across proxy processes once
+    // persisted to Convex (spans:spanById looks a span up by id alone).
+    const id = `${input.sessionId}_span_${this.nextId++}`;
     const span: UntrustedSpan = {
       id,
       sessionId: input.sessionId,
