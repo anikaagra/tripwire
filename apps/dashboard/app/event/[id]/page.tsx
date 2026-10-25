@@ -5,13 +5,16 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { DecisionChip } from "@/components/DecisionChip";
 import { formatUsd } from "@/lib/format";
+import { Explanation } from "@/components/Explanation";
+import { explanationsOf } from "@/lib/replay";
+
+/** explanation.headline is Tripwire's own call, before off/monitor mode or an approval changed it. */
+const HEADLINE_DECISION: Record<string, string> = { Blocked: "block", "Needs your OK": "ask", Allowed: "allow" };
 
 /**
- * Deliberately a stub for the highlighted-source view: highlightSpanId/
- * highlightText (Nila's explanation work) don't exist yet, so this shows
- * the plain untrusted span text for the first taint hit instead of
- * guessing at a highlighting format that isn't settled. Swap this for the
- * real highlighter once those fields land on ToolCallEvent.
+ * The injected sentence comes from the guard's explanation the proxy stores
+ * on each sink event (rendered with the same Explanation card as /replay);
+ * the full untrusted span text for the first taint hit sits below it.
  */
 export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -22,14 +25,24 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
   if (event === undefined) return <p className="text-muted">Loading…</p>;
   if (event === null) return <p className="text-muted">No event with that id.</p>;
 
+  const explanation = event.explanation;
+  const ownCall = explanation ? HEADLINE_DECISION[explanation.headline] : undefined;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between rounded-lg border border-border bg-surface p-5">
-        <div>
+        <div className="flex flex-col gap-1">
           <div className="text-xs uppercase tracking-wide text-muted">
             {event.server}__{event.tool}
           </div>
+          {explanation && <div className="text-base text-muted">{explanation.youAsked}</div>}
           <div className="text-lg font-semibold">{event.reason}</div>
+          {ownCall && ownCall !== event.decision && (
+            <div className="text-sm text-muted">
+              Tripwire&apos;s own call was <span className="font-semibold">{explanation!.headline}</span>; the final
+              result changed because of the session mode or your approval.
+            </div>
+          )}
         </div>
         <DecisionChip decision={event.decision} />
       </div>
@@ -62,22 +75,22 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
         </div>
       </div>
 
+      <Explanation items={explanationsOf(event)} />
+
       {span && (
         <div className="rounded-lg border border-border bg-surface p-5">
           <div className="text-xs uppercase tracking-wide text-muted">
             Source — {span.server}__{span.tool} ({span.itemId})
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            Highlighting of the exact injected sentence is coming soon. Full untrusted text below:
-          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">Full untrusted text:</p>
           <p className="mt-2 whitespace-pre-wrap rounded bg-background p-3 text-sm">{span.text}</p>
         </div>
       )}
 
       {event.nessieId ? (
         <p className="text-sm text-allow">Nessie confirmation: {event.nessieId}</p>
-      ) : event.kind === "sink" && event.decision === "allow" ? (
-        <p className="text-sm text-muted">No Nessie transfer created.</p>
+      ) : event.server === "bank" && event.kind === "sink" && event.decision === "block" ? (
+        <p className="text-sm font-semibold text-allow">No Nessie transfer created.</p>
       ) : null}
 
       <p className="text-xs text-muted">Latency: {event.latencyMs}ms{event.args.amount ? ` · Amount: ${formatUsd(Number(event.args.amount) * 100)}` : ""}</p>

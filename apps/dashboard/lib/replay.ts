@@ -132,11 +132,14 @@ export interface ExplanationView {
 export function explanationsOf(event: object): ExplanationView[] {
   const raw = (event as { explanation?: unknown }).explanation;
   if (!raw || typeof raw !== "object") return [];
+  // Nila's EventExplanation (packages/shared) carries its highlights in `sources`.
   const list = Array.isArray(raw)
     ? raw
-    : Array.isArray((raw as { highlights?: unknown }).highlights)
-      ? ((raw as { highlights: unknown[] }).highlights)
-      : [raw];
+    : Array.isArray((raw as { sources?: unknown }).sources)
+      ? ((raw as { sources: unknown[] }).sources)
+      : Array.isArray((raw as { highlights?: unknown }).highlights)
+        ? ((raw as { highlights: unknown[] }).highlights)
+        : [raw];
   const out: ExplanationView[] = [];
   for (const item of list) {
     if (!item || typeof item !== "object") continue;
@@ -155,7 +158,7 @@ export function explanationsOf(event: object): ExplanationView[] {
       view.context = { before: text.slice(0, start), after: text.slice(end) };
     }
     const where = [str(h.server), str(h.tool)].filter(Boolean).join("__");
-    const source = str(h.source) ?? (where ? `${where}${str(h.itemId) ? ` (${str(h.itemId)})` : ""}` : undefined);
+    const source = str(h.source) ?? str(h.where) ?? (where ? `${where}${str(h.itemId) ? ` (${str(h.itemId)})` : ""}` : undefined);
     if (source) view.source = source;
     out.push(view);
   }
