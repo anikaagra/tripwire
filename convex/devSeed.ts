@@ -174,6 +174,9 @@ export const seed = internalMutation({
       bills: [
         { id: "bill-electric-oct", payeeId: "bay-electric", payee: "Bay Electric", amountCents: 14_200,
           status: "completed", paidAt: at(9) },
+        // The larger-than-usual bill behind the pending ask (the real bank lists unpaid bills too).
+        { id: "bill-electric-large", payeeId: "bay-electric", payee: "Bay Electric", amountCents: 48_600,
+          status: "pending" },
       ],
       transfers: [],
       outbox: [],
