@@ -66,6 +66,12 @@ export interface RunOptions {
    * to start each run fresh at the scenario's opening balance.
    */
   resetBankOnStart?: boolean;
+  /**
+   * Run an off-mode run through the proxy in mode off (logs every call, blocks
+   * nothing) instead of straight to the servers, so the dashboard shows the
+   * session. The demo CLI sets this; the red team leaves it unset.
+   */
+  offThroughProxy?: boolean;
 }
 
 export interface ToolCallRecord {
@@ -167,12 +173,12 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
     ...attackEnv(opts.attack),
   });
 
-  if (opts.mode === "enforce") {
+  if (opts.mode === "enforce" || (opts.mode === "off" && opts.offThroughProxy)) {
     // Connect through the proxy, which itself spawns the mock servers as upstreams.
     const proxyMain = resolve(opts.repoRoot, "apps", "proxy", "src", "main.ts");
     if (!existsSync(proxyMain)) {
       throw new Error(
-        "enforce mode needs apps/proxy/src/main.ts (the proxy MCP server face). " +
+        `${opts.mode} mode through the proxy needs apps/proxy/src/main.ts (the proxy MCP server face). ` +
           "Pull main / build the proxy, then retry.",
       );
     }
@@ -183,7 +189,7 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
       ? Number(process.env.TRIPWIRE_CONTROL_PORT)
       : 8800 + Math.floor(Math.random() * 1000);
     // The proxy inherits this env and passes it to the bank upstream (BANK_* + attack
-    // seeds). TRIPWIRE_MODE forces enforce; TRIPWIRE_SESSION_ID pins the session so our
+    // seeds). TRIPWIRE_MODE sets enforce or off; TRIPWIRE_SESSION_ID pins the session so our
     // intent POST and the agent's calls share it. BANK_STATE / BANK_BACKEND pass through
     // from the caller's env, as in off mode (red team: memory; demo: Convex).
     const proxy = await connectStdio(
@@ -195,7 +201,7 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
         BANK_SCENARIO: opts.scenario,
         ...bankOverride, // --backend nessie from the red team runner
         ...attackEnv(opts.attack),
-        TRIPWIRE_MODE: "enforce",
+        TRIPWIRE_MODE: opts.mode,
         TRIPWIRE_SESSION_ID: sessionId,
         TRIPWIRE_CONTROL_PORT: String(controlPort),
       }),

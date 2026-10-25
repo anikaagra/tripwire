@@ -111,6 +111,8 @@ async function main(): Promise<void> {
         attack: { payload: PAYLOAD },
         intendedAction: INTENDED,
         resetBankOnStart: RESET,
+        // Off runs go through the proxy in mode off too, so the dashboard shows them.
+        offThroughProxy: true,
         verbose: VERBOSE,
         label: `run ${i}`,
       },
