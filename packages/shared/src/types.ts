@@ -83,6 +83,34 @@ export interface FinalDecision {
   reason: string;
 }
 
+/** How the raw HTML hid a sentence from the user (guard's highlighter). */
+export type HiddenHow = "display:none" | "visibility:hidden" | "white text" | "tiny text" | "HTML comment";
+
+/** Where one tainted value came from, for the dashboard's highlighted source. */
+export interface ExplanationSource {
+  spanId: string;
+  /** The tainted value, e.g. "4417". */
+  value: string;
+  /** The sentence it came from. */
+  sentence: string;
+  /** Offsets of `sentence` within the span's text. */
+  start: number;
+  end: number;
+  hidden: boolean;
+  hiddenHow?: HiddenHow;
+  /** Plain words for the source, e.g. "an email". */
+  where: string;
+}
+
+/** Built by @tripwire/guard's explain() for the event and approval pages. */
+export interface EventExplanation {
+  /** The user's request, quoted: You asked: "…" */
+  youAsked: string;
+  /** What Tripwire decided, before off/monitor mode or an approval changed it. */
+  headline: "Blocked" | "Needs your OK" | "Allowed";
+  sources: ExplanationSource[];
+}
+
 /** One row of the proxy's event log. */
 export interface ToolCallEvent {
   id: string;
@@ -98,6 +126,7 @@ export interface ToolCallEvent {
   taintHits: TaintHit[];
   latencyMs: number;
   nessieId?: string;
+  explanation?: EventExplanation;
 }
 
 export interface ApprovalRecord {

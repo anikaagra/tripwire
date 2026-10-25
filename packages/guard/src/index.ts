@@ -1,5 +1,5 @@
 export { decide } from "./decide.js";
-export { explain } from "./explain.js";
+export { explain, toEventExplanation } from "./explain.js";
 export type { Explanation, ExplanationSource } from "./explain.js";
 export { highlightTaint, MAX_SENTENCE_CHARS } from "./highlight.js";
 export type { HiddenHow, Highlight } from "./highlight.js";

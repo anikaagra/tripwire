@@ -1,20 +1,28 @@
-import type { Decision, FinalDecision, TaintHit, UntrustedSpan } from "@tripwire/shared";
-import { highlightTaint, type Highlight } from "./highlight.js";
+import type {
+  Decision,
+  EventExplanation,
+  ExplanationSource,
+  FinalDecision,
+  TaintHit,
+  UntrustedSpan,
+} from "@tripwire/shared";
+import { highlightTaint } from "./highlight.js";
 
-export interface ExplanationSource extends Highlight {
-  /** Plain words for where the text came from, e.g. "an email". */
-  where: string;
-}
+export type { ExplanationSource };
 
-/** Everything the dashboard's event page and the approval page need to show. */
-export interface Explanation {
-  /** The user's request, quoted: You asked: "…" */
-  youAsked: string;
-  headline: "Blocked" | "Needs your OK" | "Allowed";
+/**
+ * Everything the dashboard's event page and the approval page need to show.
+ * The EventExplanation part is what gets stored on the event (toEventExplanation).
+ */
+export interface Explanation extends EventExplanation {
   reason: string;
-  sources: ExplanationSource[];
   /** All of the above as plain text, for the terminal and logs. */
   text: string;
+}
+
+/** Just the fields the Convex events table stores; it rejects extra keys. */
+export function toEventExplanation(e: Explanation): EventExplanation {
+  return { youAsked: e.youAsked, headline: e.headline, sources: e.sources };
 }
 
 const HEADLINES: Record<Decision, Explanation["headline"]> = {

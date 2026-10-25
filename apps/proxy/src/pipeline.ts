@@ -1,6 +1,7 @@
 import type {
   Decision,
   DecideInput,
+  EventExplanation,
   FinalDecision,
   GuardInput,
   GuardVerdict,
@@ -15,7 +16,7 @@ import type { EventLog } from "./eventLog.js";
 import type { ApprovalBackend } from "./approvals/approvalBackend.js";
 import type { SpanLog } from "./spanLog.js";
 import { NoopSpanLog } from "./spanLog.js";
-import { decide as guardDecide, judge as guardJudge } from "@tripwire/guard";
+import { decide as guardDecide, explain, judge as guardJudge, toEventExplanation } from "@tripwire/guard";
 
 export interface PipelineDeps {
   policyResolver: PolicyResolver;
@@ -131,6 +132,15 @@ export class Pipeline {
 
     let final = this.decideFn({ ruleOutcome: ruleResult.outcome, ruleHits: ruleResult.hits, taintHits, verdict });
 
+    // Built before the off/monitor overrides below, so the event page can still
+    // show what Tripwire would have done. Never lets an explanation bug break a decision.
+    let explanation: EventExplanation | undefined;
+    try {
+      explanation = toEventExplanation(explain({ intent: session.intent, final, taintHits, spans }));
+    } catch (err) {
+      console.error(`[tripwire] explain() failed: ${(err as Error).message}`);
+    }
+
     if (session.mode === "off") {
       final = { decision: "allow", reason: "Tripwire is off for this session." };
     } else if (session.mode === "monitor" && final.decision !== "allow") {
@@ -161,6 +171,7 @@ export class Pipeline {
       ruleHits: ruleResult.hits,
       taintHits,
       latencyMs,
+      ...(explanation ? { explanation } : {}),
     });
 
     if (decision === "ask" && session.mode === "enforce") {

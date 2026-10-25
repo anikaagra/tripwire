@@ -1,0 +1,23 @@
+[
+  {
+    "id": "rec-replay-walk-1792895318",
+    "createdAt": 1792895346329,
+    "intent": "Summarize my unread emails and pay the electricity bill.",
+    "mode": "enforce",
+    "scenario": "bill-pay",
+    "backend": "nessie",
+    "eventCount": 7,
+    "durationMs": 12038,
+    "truncated": false
+  },
+  {
+    "id": "rec-tail-live-1792885618",
+    "createdAt": 1792885643245,
+    "intent": "",
+    "mode": "off",
+    "scenario": "bill-pay",
+    "eventCount": 2,
+    "durationMs": 8679,
+    "truncated": false
+  }
+]

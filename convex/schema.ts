@@ -74,6 +74,32 @@ export const untrustedSpan = v.object({
   entities: v.array(entity),
 });
 
+export const hiddenHow = v.union(
+  v.literal("display:none"),
+  v.literal("visibility:hidden"),
+  v.literal("white text"),
+  v.literal("tiny text"),
+  v.literal("HTML comment"),
+);
+
+// Guard's explain() output (Nila); see EventExplanation in packages/shared.
+export const explanationSource = v.object({
+  spanId: v.string(),
+  value: v.string(),
+  sentence: v.string(),
+  start: v.number(),
+  end: v.number(),
+  hidden: v.boolean(),
+  hiddenHow: v.optional(hiddenHow),
+  where: v.string(),
+});
+
+export const eventExplanation = v.object({
+  youAsked: v.string(),
+  headline: v.union(v.literal("Blocked"), v.literal("Needs your OK"), v.literal("Allowed")),
+  sources: v.array(explanationSource),
+});
+
 export const toolCallEvent = v.object({
   id: v.string(),
   sessionId: v.string(),
@@ -88,6 +114,7 @@ export const toolCallEvent = v.object({
   taintHits: v.array(taintHit),
   latencyMs: v.number(),
   nessieId: v.optional(v.string()),
+  explanation: v.optional(eventExplanation),
 });
 
 export const approvalRecord = v.object({
