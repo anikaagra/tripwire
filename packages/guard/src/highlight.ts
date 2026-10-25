@@ -1,4 +1,6 @@
-import type { TaintHit, UntrustedSpan } from "@tripwire/shared";
+import type { HiddenHow, TaintHit, UntrustedSpan } from "@tripwire/shared";
+
+export type { HiddenHow };
 
 /**
  * Explanation highlighting (design doc): find the tainted value in the span it
@@ -8,13 +10,6 @@ import type { TaintHit, UntrustedSpan } from "@tripwire/shared";
  * This runs after the decision, only to explain it to a human. It never feeds
  * the judge, so attacker text here can't influence a verdict.
  */
-
-export type HiddenHow =
-  | "display:none"
-  | "visibility:hidden"
-  | "white text"
-  | "tiny text"
-  | "HTML comment";
 
 export interface Highlight {
   spanId: string;

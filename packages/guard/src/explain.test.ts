@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { extractEntities } from "@tripwire/provenance";
 import type { TaintHit, UntrustedSpan } from "@tripwire/shared";
-import { explain } from "./explain.js";
+import { explain, toEventExplanation } from "./explain.js";
 
 function span(id: string, tool: string, text: string, rawHtml?: string): UntrustedSpan {
   return { id, sessionId: "s1", server: "inbox", tool, itemId: id, text, rawHtml, entities: extractEntities(text) };
@@ -74,6 +74,22 @@ describe("explain", () => {
     });
 
     expect(e.sources).toEqual([]);
+  });
+
+  it("keeps only the stored fields for the event (Convex rejects extra keys)", () => {
+    const e = explain({
+      intent,
+      final: { decision: "block", reason: "x" },
+      taintHits: [hit4417],
+      spans: [demoEmail],
+    });
+
+    const stored = toEventExplanation(e);
+
+    expect(Object.keys(stored).sort()).toEqual(["headline", "sources", "youAsked"]);
+    expect(Object.keys(stored.sources[0]!).sort()).toEqual(
+      ["end", "hidden", "hiddenHow", "sentence", "spanId", "start", "value", "where"],
+    );
   });
 
   it("names bank and qualified tool sources in plain words", () => {

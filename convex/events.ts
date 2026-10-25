@@ -8,7 +8,7 @@
  */
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { decision as decisionValidator, policyKind, ruleHit, taintHit } from "./schema";
+import { decision as decisionValidator, eventExplanation, policyKind, ruleHit, taintHit } from "./schema";
 
 export const record = mutation({
   args: {
@@ -25,6 +25,7 @@ export const record = mutation({
     taintHits: v.array(taintHit),
     latencyMs: v.number(),
     nessieId: v.optional(v.string()),
+    explanation: v.optional(eventExplanation),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("events", args);
