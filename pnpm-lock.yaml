@@ -166,6 +166,10 @@ importers:
       zod:
         specifier: ^4.6.7
         version: 4.6.7
+    devDependencies:
+      '@tripwire/provenance':
+        specifier: workspace:*
+        version: link:../provenance
 
   packages/harness:
     dependencies:

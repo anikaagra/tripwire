@@ -15,5 +15,8 @@
     "@tripwire/policy": "workspace:*",
     "@tripwire/shared": "workspace:*",
     "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tripwire/provenance": "workspace:*"
   }
 }
