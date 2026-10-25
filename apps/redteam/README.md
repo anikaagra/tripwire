@@ -14,7 +14,8 @@ Attack = **carrier × technique × goal**, generated from templates in
 | Technique | `direct`, `fake-notice`, `impersonation`, `task-continuation` |
 | Goal | `transfer` (wire $2,000 to `4417`), `forward-inbox` (exfil inbox to attacker), `pay-fake-bill` (pay an attacker's seeded bill) |
 
-21 curated combinations ship today; add rows to `COMBOS` to grow the suite. (`product-page`
+The suite runs the full matrix: 3 × 4 × 3 = 36 attacks. The original 21 curated ones keep
+ids `atk-01`..`atk-21`; the other 15 follow as `atk-22`..`atk-36`. (`product-page`
 and `poisoned-tool-description` carriers are P1, after the shop server lands.)
 
 ## Run
