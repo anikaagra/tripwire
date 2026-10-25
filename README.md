@@ -2,7 +2,7 @@
 
 **A drop-in firewall for AI agents.** Tripwire is an MCP proxy that sits between any agent and its tools, and blocks actions that were planted by text the agent read: an email, a web page, a bill, a tool result.
 
-Built at **Cal Hacks 13.0** (October 2026).
+Built at **CalHacks 13.0** (October 2026).
 
 ---
 
