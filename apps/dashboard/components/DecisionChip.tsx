@@ -11,11 +11,12 @@ const LABELS: Record<string, string> = {
 };
 
 /** The allow/block/ask pill used everywhere a decision shows up. Colors are chosen to read from the back row. */
-export function DecisionChip({ decision }: { decision: string }) {
+export function DecisionChip({ decision, size = "md" }: { decision: string; size?: "md" | "lg" }) {
   const style = STYLES[decision] ?? "bg-border text-muted";
   const label = LABELS[decision] ?? decision;
+  const sizing = size === "lg" ? "px-4 py-1.5 text-lg" : "px-3 py-1 text-sm";
   return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold uppercase tracking-wide ${style}`}>
+    <span className={`inline-flex items-center rounded-full ${sizing} font-semibold uppercase tracking-wide ${style}`}>
       {label}
     </span>
   );
