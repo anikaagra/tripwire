@@ -51,3 +51,56 @@ export function HiddenTag({ how }: { how?: string }) {
 /** Keep about 160 chars of context on each side. */
 const trimStart = (s: string) => (s.length > 160 ? `…${s.slice(-160)}` : s);
 const trimEnd = (s: string) => (s.length > 160 ? `${s.slice(0, 160)}…` : s);
+
+/**
+ * The whole source text as an evidence document, with the planted sentence
+ * (text[start, end)) lit up under the "UV lamp". Used on the event page when
+ * the span's full text is loaded; falls back to <Explanation> otherwise.
+ */
+export function EvidenceDocument({
+  text,
+  start,
+  end,
+  value,
+  hidden,
+  hiddenHow,
+  title,
+  meta,
+}: {
+  text: string;
+  start: number;
+  end: number;
+  value?: string;
+  hidden: boolean;
+  hiddenHow?: string;
+  title: string;
+  meta?: string;
+}) {
+  const before = text.slice(0, start);
+  const sentence = text.slice(start, end);
+  const after = text.slice(end);
+  const [pre, val, post] = splitOnValue(sentence, value);
+  return (
+    <figure className="relative border border-border bg-panel">
+      <CornerMarks />
+      <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-5 py-2.5">
+        <span className="flex flex-wrap items-baseline gap-x-3">
+          <span className="display-caps text-base text-muted">Evidence</span>
+          <span className="text-lg text-foreground">{title}</span>
+          {meta && <span className="font-mono text-sm text-muted">{meta}</span>}
+        </span>
+        {hidden ? <HiddenTag how={hiddenHow} /> : <span className="display-caps text-sm text-muted">Visible text</span>}
+      </figcaption>
+      {/* The document: ruled left margin like a printed page */}
+      <blockquote className="mx-5 my-5 whitespace-pre-wrap border-l border-mark pl-5 font-mono text-xl leading-relaxed text-muted">
+        {before}
+        <mark className="uv-reveal">
+          {pre}
+          {val && <strong className="font-bold underline decoration-2 underline-offset-4">{val}</strong>}
+          {post}
+        </mark>
+        {after}
+      </blockquote>
+    </figure>
+  );
+}
