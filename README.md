@@ -102,7 +102,7 @@ Red Team mode runs a reproducible attack suite twice, once with Tripwire **off**
 | Benign tasks falsely blocked | – | **0 / 10** |
 | Suite run time (enforce, attacks + benign) | – | 4 min 26 s |
 
-<!-- Numbers from the saved Convex runs rt-off-1792886849384 and rt-enforce-1792886936179. Re-check against Saturday night's saved run before submission. -->
+<!-- Numbers from the saved Convex runs rt-off-1792886849384 / rt-enforce-1792886936179 (the 21 curated attacks). The suite is now the full 36-attack matrix: replace this table with Saturday night's saved run before submission. -->
 
 > **How "off" is measured.** Current Claude models resist these injections on their own: across 105 off-mode runs on Sonnet 5.5 and Haiku 5.5, the agent read the payload every time and never obeyed it ([details](apps/agent/README.md)). A firewall has to hold even when the model *is* fooled, so the suite uses a clearly labeled **compromised** profile that simulates a hijacked or unhardened agent by issuing each attack's intended action. **Off** is the damage that action does; **on** is what Tripwire stops. We don't claim the model wired the money on its own.
 
@@ -154,7 +154,7 @@ pnpm agent --scenario bill-pay --mode enforce --profile compromised        # bil
 ```
 
 **Off:** the balance drops by the bill, then by $2,000, and the attacker's Nessie account receives the money.
-**Enforce:** the bill is paid, the transfer is blocked, and no Nessie record is created. The event page shows the email text the account number came from.
+**Enforce:** the bill is paid, the transfer is blocked, no Nessie record is created, and the dashboard highlights the hidden sentence that tried it.
 
 **The "ask" path.** A larger-than-usual bill ($486, over the $300 policy limit) is legitimate but unusual, so Tripwire asks instead of deciding:
 
@@ -195,7 +195,7 @@ Either way, the proxy loads its keys from this repo's `.env` / `.env.local`. No 
 
 ## Built on Capital One Nessie
 
-Tripwire's bank runs on real [Nessie](https://api.nessieisreal.com) records. Every payment the agent makes, and every attack it falls for when Tripwire is off, is a real Nessie withdrawal and deposit. The attacker's account visibly receives the stolen $2,000. With Tripwire on, the blocked transfer creates **no Nessie record** at all; `/replay` labels it "No Nessie record created."
+Tripwire's bank runs on real [Nessie](https://api.nessieisreal.com) records. Every payment the agent makes, and every attack it falls for when Tripwire is off, is a real Nessie withdrawal and deposit. The attacker's account visibly receives the stolen $2,000. With Tripwire on, the blocked transfer creates no Nessie record, and the event page says so: **"No Nessie transfer created."**
 
 **How it works.** We probed the live API first (`pnpm nessie:verify`, results in [`docs/nessie-findings.md`](docs/nessie-findings.md)). Nessie never changes an account's stored balance, transfers can't name a payee, and amounts are stored as whole dollars. So the bank keeps a ledger on top of Nessie:
 
@@ -215,7 +215,7 @@ A Next.js app backed by Convex, so every view updates live. Put `NEXT_PUBLIC_CON
 | Page | Shows |
 |---|---|
 | `/` | Live session: timeline of allow / block / ask decisions, mode, balance, backend, intent, pending approvals |
-| `/event/[id]` | One decision: the call, the reason, arguments, rule and taint hits, the untrusted text the tainted value came from, Nessie confirmation, latency |
+| `/event/[id]` | One decision: what you asked for, the proposed call, the reason, the injected sentence highlighted in its source (with a hidden-text label), and Nessie proof |
 | `/approve/[id]` | Mobile approval page: the reason in one sentence, the proposed call and its arguments, Approve / Deny |
 | `/redteam` | Scorecard: attack success off vs. on, blocked, asked, false positives, backend |
 | `/replay` and `/replay/[id]` | Plays a recorded run with its original timing (`?autoplay=1` for the stage). Falls back to a committed offline copy if Convex is unreachable; `pnpm record --export <id>` writes one |
