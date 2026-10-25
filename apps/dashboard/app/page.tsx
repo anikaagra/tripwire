@@ -61,7 +61,7 @@ export default function SessionPage() {
   const attacker = envState?.attackerReceived;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 stage:gap-3">
       {/* One red pulse around the screen edge per block that arrives live. */}
       {lastLiveBlock && <div key={lastLiveBlock.id} className="edge-pulse" aria-hidden />}
 
@@ -70,16 +70,27 @@ export default function SessionPage() {
         <Beam state={beamState} marks={marks} showLabels />
       </div>
 
-      {/* Console strip: mode, balance, attacker */}
-      <div className="-mt-2 grid gap-6 md:grid-cols-[auto_1fr_auto] md:items-end">
-        <ArmSwitch mode={session.mode} />
-        <div className="md:justify-self-center">
+      {/* Console strip: mode and request on the left, then the two counters.
+          The counter columns have fixed widths so nothing shifts when a number grows. */}
+      <div className="-mt-3 grid gap-x-8 gap-y-5 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
+        <div className="flex min-w-0 flex-col gap-3">
+          <ArmSwitch mode={session.mode} />
+          <p className="border-l-2 border-mark pl-3 text-lg leading-snug">
+            <span className="display-caps mr-2 text-sm text-muted">You asked</span>
+            {session.intent ? (
+              <span className="text-foreground">&ldquo;{session.intent}&rdquo;</span>
+            ) : (
+              <span className="text-muted">No request registered yet.</span>
+            )}
+          </p>
+        </div>
+        <div className="md:w-[24rem]">
           <Label>
             Balance{envState?.backend ? ` · ${envState.backend === "nessie" ? "Capital One Nessie" : "local bank"}` : ""}
           </Label>
-          <BigNumber cents={envState?.balance} label="Balance" className="text-7xl md:text-8xl" showDelta />
+          <BigNumber cents={envState?.balance} label="Balance" className="text-7xl md:text-[5.5rem]" showDelta />
         </div>
-        <div className="md:text-right">
+        <div className="md:w-[16.5rem] md:text-right">
           <Label>Sent to attacker</Label>
           <BigNumber
             cents={attacker}
@@ -90,26 +101,17 @@ export default function SessionPage() {
         </div>
       </div>
 
-      <p className="border-l-2 border-mark pl-4 text-xl">
-        <span className="display-caps mr-3 text-base text-muted">You asked</span>
-        {session.intent ? (
-          <span className="text-foreground">&ldquo;{session.intent}&rdquo;</span>
-        ) : (
-          <span className="text-muted">No request registered yet.</span>
-        )}
-      </p>
-
       {pending?.map((a) => {
         const ev = sorted.find((e) => e.id === a.eventId);
         return (
           <Link
             key={a.id}
             href={`/approve/${a.id}`}
-            className="flex flex-wrap items-center justify-between gap-4 border border-ask bg-ask-bg px-5 py-3 text-ask"
+            className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border border-ask bg-ask-bg px-5 py-2 text-ask"
           >
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <DecisionIcon decision="ask" size={22} />
-              <span className="display-caps whitespace-nowrap text-2xl">Needs your OK</span>
+              <DecisionIcon decision="ask" size={20} />
+              <span className="display-caps whitespace-nowrap text-xl">Needs your OK</span>
               {ev && <span className="basis-full text-lg text-foreground md:basis-auto">{ev.reason}</span>}
             </span>
             <span className="display-caps text-xl underline underline-offset-4">Review</span>
@@ -130,7 +132,7 @@ export default function SessionPage() {
                 <li key={e.id} className={isLive(e.id) ? "row-enter" : undefined}>
                   <Link
                     href={`/event/${e.id}`}
-                    className={`grid grid-cols-[auto_1fr_auto] items-start gap-x-4 gap-y-1 border-l-4 px-4 py-3.5 hover:bg-panel-raised sm:grid-cols-[3.5rem_5.5rem_1fr_auto] sm:px-5 ${
+                    className={`grid grid-cols-[auto_1fr_auto] items-start gap-x-4 gap-y-0.5 border-l-4 px-4 py-2.5 hover:bg-panel-raised stage:py-1.5 sm:grid-cols-[3.5rem_5.5rem_1fr_auto] sm:px-5 ${
                       blocked ? "border-block bg-block-bg/60" : e.decision === "ask" ? "border-ask" : "border-transparent"
                     }`}
                   >
@@ -146,7 +148,7 @@ export default function SessionPage() {
                         {t.verb}
                         {t.value && <span className={`ml-2 break-words font-bold ${blocked ? "text-block" : ""}`}>{t.value}</span>}
                       </span>
-                      {e.kind !== "source" && <span className="block text-base text-muted">{e.reason}</span>}
+                      {e.kind !== "source" && <span className="block text-base text-muted sm:truncate">{e.reason}</span>}
                     </span>
                     <span className="justify-self-end">
                       <DecisionChip decision={e.decision} />

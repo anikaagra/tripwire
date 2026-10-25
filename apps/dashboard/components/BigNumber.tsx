@@ -9,7 +9,7 @@ const DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
  * A mechanical counter for money (integer cents). When the value changes each
  * digit wheel rolls to its new position, right to left, so a drop is
  * unmissable. Reduced motion: it jumps straight to the new value.
- * `showDelta` keeps a "−$2,000.00" tag beside it after a change.
+ * `showDelta` keeps a "−$2,000.00" tag above its right edge after a change.
  */
 export function BigNumber({
   cents,
@@ -38,7 +38,7 @@ export function BigNumber({
   const color = tone === "block" ? "text-block" : tone === "muted" ? "text-muted" : "text-foreground";
 
   return (
-    <div className="flex flex-wrap items-end gap-x-4 gap-y-1">
+    <div className="relative inline-block">
       <span
         className={`font-display font-bold leading-none tabular-nums ${color} ${className}`}
         aria-label={label ? `${label}: ${text}` : text}
@@ -74,7 +74,8 @@ export function BigNumber({
         </span>
       </span>
       {showDelta && delta !== null && delta !== 0 && (
-        <span className={`mb-1 font-mono text-xl tabular-nums ${delta < 0 ? "text-block" : "text-allow"}`}>
+        // Sits on the label row above the number, so it never adds height.
+        <span className={`absolute bottom-full right-0 mb-0.5 font-mono text-lg leading-none tabular-nums ${delta < 0 ? "text-block" : "text-allow"}`}>
           {delta < 0 ? "−" : "+"}
           {formatUsd(Math.abs(delta))}
         </span>

@@ -21,6 +21,13 @@
   --font-display: var(--font-display-face), "Arial Narrow", sans-serif;
 }
 
+/* `stage:` utilities apply only in ?stage=1 (e.g. tighter spacing to offset the bigger text). */
+@custom-variant stage {
+  &:where([data-stage="1"] *) {
+    @slot;
+  }
+}
+
 /* Condensed uppercase display type for headings, labels and big numbers. */
 @utility display-caps {
   font-family: var(--font-display);
