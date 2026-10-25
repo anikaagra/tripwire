@@ -91,6 +91,24 @@ export const latestRun = query({
   },
 });
 
+/**
+ * Added by Anika G for the /redteam dashboard page: off and enforce runs
+ * are separate rows (see apps/redteam/src/index.ts's `rt-${MODE}-${Date.now()}`
+ * runIds), so latestRun alone can't show the before/after headline — the
+ * page needs the most recent run of EACH mode. Pure addition, no change to
+ * startRun/recordAttack/finishRun.
+ */
+export const recentRuns = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit }) => {
+    return await ctx.db
+      .query("redteamRuns")
+      .withIndex("by_startedAt")
+      .order("desc")
+      .take(limit ?? 10);
+  },
+});
+
 /** All attacks for a run, for the per-attack grid. */
 export const attacksByRun = query({
   args: { runId: v.string() },

@@ -4,5 +4,7 @@ packages:
   - "packages/*"
 
 # Convex bundles functions with esbuild, which needs its install script.
+# unrs-resolver is Next.js's native module resolver (via eslint-config-next).
 allowBuilds:
   esbuild: true
+  unrs-resolver: true
