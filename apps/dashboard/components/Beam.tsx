@@ -45,11 +45,14 @@ export function Beam({
   marks = [],
   className = "",
   showLabels = false,
+  playhead,
 }: {
   state?: BeamState;
   marks?: BeamMark[];
   className?: string;
   showLabels?: boolean;
+  /** 0..1: a thin cursor across the beam (the replay position). */
+  playhead?: number;
 }) {
   const breaks = state === "off" ? [] : marks.filter((m) => m.kind === "block").sort((a, b) => a.at - b.at);
 
@@ -94,6 +97,14 @@ export function Beam({
           />
         ))}
       </div>
+
+      {playhead !== undefined && (
+        <span
+          aria-hidden
+          className="absolute top-0 h-6 w-px bg-foreground/70"
+          style={{ left: `${Math.min(1, Math.max(0, playhead)) * 100}%` }}
+        />
+      )}
 
       {/* Calls on the beam */}
       {marks.map((m, i) => (
