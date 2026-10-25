@@ -12,9 +12,9 @@ policyFile: ./tripwire.policy.yaml
 upstreams:
   - name: inbox
     entry: apps/mock-servers/inbox/src/index.ts
-    env:
-      TRIPWIRE_SCENARIO: bill-pay
-      TRIPWIRE_PAYLOAD: hidden
+    # No TRIPWIRE_SCENARIO / TRIPWIRE_PAYLOAD here: upstream env overrides the
+    # inherited env, so pinning them would ignore the harness's --scenario and
+    # payload. The inbox already defaults to bill-pay / hidden.
 
   - name: bank
     entry: apps/mock-servers/bank/src/index.ts

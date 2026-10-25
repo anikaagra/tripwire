@@ -191,6 +191,7 @@ async function connectUpstreams(opts: RunOptions): Promise<Upstream[]> {
       process.execPath,
       ["--import", "tsx", proxyMain],
       cleanEnv({
+        TRIPWIRE_SCENARIO: opts.scenario,
         BANK_SCENARIO: opts.scenario,
         ...bankOverride, // --backend nessie from the red team runner
         ...attackEnv(opts.attack),
