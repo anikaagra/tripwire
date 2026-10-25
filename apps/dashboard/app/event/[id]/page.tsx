@@ -8,6 +8,9 @@ import { formatUsd } from "@/lib/format";
 import { Explanation } from "@/components/Explanation";
 import { explanationsOf } from "@/lib/replay";
 
+/** explanation.headline is Tripwire's own call, before off/monitor mode or an approval changed it. */
+const HEADLINE_DECISION: Record<string, string> = { Blocked: "block", "Needs your OK": "ask", Allowed: "allow" };
+
 /**
  * The injected sentence comes from the guard's explanation the proxy stores
  * on each sink event (rendered with the same Explanation card as /replay);
@@ -22,14 +25,24 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
   if (event === undefined) return <p className="text-muted">Loading…</p>;
   if (event === null) return <p className="text-muted">No event with that id.</p>;
 
+  const explanation = event.explanation;
+  const ownCall = explanation ? HEADLINE_DECISION[explanation.headline] : undefined;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between rounded-lg border border-border bg-surface p-5">
-        <div>
+        <div className="flex flex-col gap-1">
           <div className="text-xs uppercase tracking-wide text-muted">
             {event.server}__{event.tool}
           </div>
+          {explanation && <div className="text-base text-muted">{explanation.youAsked}</div>}
           <div className="text-lg font-semibold">{event.reason}</div>
+          {ownCall && ownCall !== event.decision && (
+            <div className="text-sm text-muted">
+              Tripwire&apos;s own call was <span className="font-semibold">{explanation!.headline}</span>; the final
+              result changed because of the session mode or your approval.
+            </div>
+          )}
         </div>
         <DecisionChip decision={event.decision} />
       </div>
@@ -76,8 +89,8 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
 
       {event.nessieId ? (
         <p className="text-sm text-allow">Nessie confirmation: {event.nessieId}</p>
-      ) : event.kind === "sink" && event.decision === "allow" ? (
-        <p className="text-sm text-muted">No Nessie transfer created.</p>
+      ) : event.server === "bank" && event.kind === "sink" && event.decision === "block" ? (
+        <p className="text-sm font-semibold text-allow">No Nessie transfer created.</p>
       ) : null}
 
       <p className="text-xs text-muted">Latency: {event.latencyMs}ms{event.args.amount ? ` · Amount: ${formatUsd(Number(event.args.amount) * 100)}` : ""}</p>
