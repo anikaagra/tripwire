@@ -73,6 +73,37 @@ export class Pipeline {
     return span;
   }
 
+  /** Logs a source/neutral call as an allowed event, so it shows up in the timeline alongside sink decisions (those never go through decideSinkCall). */
+  async recordPassthroughEvent(input: {
+    sessionId: string;
+    server: string;
+    tool: string;
+    kind: "source" | "neutral";
+    args: Record<string, unknown>;
+    latencyMs: number;
+  }): Promise<string> {
+    const eventId = `${input.sessionId}_evt_${eventCounter++}`;
+    await this.deps.eventLog.record({
+      id: eventId,
+      sessionId: input.sessionId,
+      ts: this.now() - input.latencyMs,
+      server: input.server,
+      tool: input.tool,
+      kind: input.kind,
+      args: input.args,
+      decision: "allow",
+      reason: `${input.kind} tool`,
+      ruleHits: [],
+      taintHits: [],
+      latencyMs: input.latencyMs,
+    });
+    return eventId;
+  }
+
+  async setNessieId(eventId: string, nessieId: string): Promise<void> {
+    await this.deps.eventLog.setNessieId(eventId, nessieId);
+  }
+
   async decideSinkCall(input: {
     sessionId: string;
     server: string;

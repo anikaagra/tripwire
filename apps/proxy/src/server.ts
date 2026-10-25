@@ -3,7 +3,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import type { PolicyResolver } from "./policyResolver.js";
 import type { RegisteredTool } from "./upstream.js";
 import type { Pipeline } from "./pipeline.js";
-import { deriveItemId, extractSpanContent } from "./spanContent.js";
+import { deriveItemId, extractNessieId, extractSpanContent } from "./spanContent.js";
 
 export interface BuildMcpServerDeps {
   registry: Map<string, RegisteredTool>;
@@ -14,7 +14,8 @@ export interface BuildMcpServerDeps {
 
 /**
  * The MCP server face the agent talks to. Sources/neutral tools forward to
- * their upstream immediately and the result is stashed as an untrusted span;
+ * their upstream immediately, logged as an allowed event once they return
+ * (so they show up in the timeline too) plus stashed as an untrusted span;
  * sinks are held for Pipeline.decideSinkCall first. decideSinkCall already
  * resolves any "ask" to allow/block via the approvals backend, so this
  * handler only ever sees allow or block.
@@ -42,6 +43,7 @@ export function buildMcpServer(deps: BuildMcpServerDeps): Server {
     }
 
     const policy = policyResolver.resolve(name, tool.annotations);
+    let sinkEventId: string | undefined;
 
     if (policy.kind === "sink") {
       const result = await pipeline.decideSinkCall({
@@ -51,6 +53,7 @@ export function buildMcpServer(deps: BuildMcpServerDeps): Server {
         qualifiedTool: name,
         args,
       });
+      sinkEventId = result.eventId;
       if (result.decision !== "allow") {
         return {
           isError: true,
@@ -61,10 +64,30 @@ export function buildMcpServer(deps: BuildMcpServerDeps): Server {
       }
     }
 
+    const callStart = Date.now();
     const upstreamResult = await tool.client.callTool({ name: tool.bareName, arguments: args });
+    const latencyMs = Date.now() - callStart;
+
+    const typedResult = upstreamResult as { content?: Array<{ type: string; text?: string }> };
+    const nessieId = extractNessieId(typedResult);
+
+    if (sinkEventId && nessieId) {
+      await pipeline.setNessieId(sinkEventId, nessieId);
+    }
+
+    if (policy.kind === "source" || policy.kind === "neutral") {
+      await pipeline.recordPassthroughEvent({
+        sessionId,
+        server: tool.server,
+        tool: tool.bareName,
+        kind: policy.kind,
+        args,
+        latencyMs,
+      });
+    }
 
     if (policy.kind === "source" && policy.taintSource !== false) {
-      const { text, rawHtml } = extractSpanContent(upstreamResult as { content?: Array<{ type: string; text?: string }> });
+      const { text, rawHtml } = extractSpanContent(typedResult);
       await pipeline.recordSourceResult({
         sessionId,
         server: tool.server,

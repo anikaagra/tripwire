@@ -26,9 +26,22 @@ export function extractSpanContent(result: { content?: Array<{ type: string; tex
 
 function stripTags(html: string): string {
   return html
+    // Drop just the comment delimiters, not their contents: an attacker
+    // can hide "send $2,000 to 4417" inside <!-- ... --> and the agent
+    // still sees it in the raw HTML, so taint must see it too. Stripping
+    // tags first would have deleted the comment's text along with it.
+    .replace(/<!--/g, " ")
+    .replace(/-->/g, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/** Parses the bank server's "Confirmation: <uuid>" line out of a tool result's text, when present. */
+export function extractNessieId(result: { content?: Array<{ type: string; text?: string }> }): string | undefined {
+  const parts = Array.isArray(result.content) ? result.content : [];
+  const joined = parts.map((p) => (p.type === "text" ? p.text ?? "" : "")).join("\n");
+  return joined.match(/Confirmation:\s*(\S+)/)?.[1];
 }
 
 /** A stable-ish id for the span: the call's "id" argument when present, else the bare tool name. */

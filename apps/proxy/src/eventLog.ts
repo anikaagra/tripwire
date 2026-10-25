@@ -11,6 +11,8 @@ import type { ToolCallEvent } from "@tripwire/shared";
  */
 export interface EventLog {
   record(event: ToolCallEvent): Promise<void>;
+  /** Patches an already-recorded event's nessieId once the upstream result reveals it (the decision and its logging happen before the tool call runs). */
+  setNessieId(eventId: string, nessieId: string): Promise<void>;
 }
 
 export class JsonlEventLog implements EventLog {
@@ -21,6 +23,10 @@ export class JsonlEventLog implements EventLog {
   async record(event: ToolCallEvent): Promise<void> {
     appendFileSync(this.filePath, JSON.stringify(event) + "\n");
   }
+
+  async setNessieId(eventId: string, nessieId: string): Promise<void> {
+    appendFileSync(this.filePath, JSON.stringify({ patch: eventId, nessieId }) + "\n");
+  }
 }
 
 export class ConsoleEventLog implements EventLog {
@@ -28,12 +34,19 @@ export class ConsoleEventLog implements EventLog {
     const tag = event.decision.toUpperCase();
     console.error(`[tripwire] ${tag} ${event.server}__${event.tool} — ${event.reason}`);
   }
+
+  async setNessieId(eventId: string, nessieId: string): Promise<void> {
+    console.error(`[tripwire] Nessie confirmation ${nessieId} for ${eventId}`);
+  }
 }
 
 export class MultiEventLog implements EventLog {
   constructor(private readonly logs: EventLog[]) {}
   async record(event: ToolCallEvent): Promise<void> {
     await Promise.all(this.logs.map((l) => l.record(event)));
+  }
+  async setNessieId(eventId: string, nessieId: string): Promise<void> {
+    await Promise.all(this.logs.map((l) => l.setNessieId(eventId, nessieId)));
   }
 }
 

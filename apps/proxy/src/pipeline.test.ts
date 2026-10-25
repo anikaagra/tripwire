@@ -38,8 +38,12 @@ class FakeApprovals implements ApprovalBackend {
 
 class RecordingEventLog implements EventLog {
   public events: Parameters<EventLog["record"]>[0][] = [];
+  public nessiePatches: Array<{ eventId: string; nessieId: string }> = [];
   async record(event: Parameters<EventLog["record"]>[0]): Promise<void> {
     this.events.push(event);
+  }
+  async setNessieId(eventId: string, nessieId: string): Promise<void> {
+    this.nessiePatches.push({ eventId, nessieId });
   }
 }
 

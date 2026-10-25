@@ -78,11 +78,13 @@ async function main(): Promise<void> {
   let convex = createConvexClient();
   if (convex) {
     try {
+      const bankBackend = process.env.BANK_BACKEND;
       await convex.mutation(upsertSessionFn, {
         sessionId,
         mode,
         intent: "",
         scenario: process.env.TRIPWIRE_SCENARIO ?? "bill-pay",
+        backend: bankBackend === "nessie" || bankBackend === "local" ? bankBackend : undefined,
       });
     } catch (err) {
       console.error(
