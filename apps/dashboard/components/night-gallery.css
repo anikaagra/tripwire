@@ -69,7 +69,7 @@ body {
 .gallery-lit {
   position: absolute;
   inset: 0;
-  mask-image: radial-gradient(circle 230px at var(--mx, 50%) var(--my, 80%), #000 0%, rgb(0 0 0 / 0.5) 45%, transparent 100%);
+  mask-image: radial-gradient(circle 170px at var(--mx, 50%) var(--my, 80%), #000 0%, rgb(0 0 0 / 0.5) 45%, transparent 100%);
 }
 .gallery-lit .gallery-beams {
   filter: drop-shadow(0 0 3px rgb(255 120 110 / 1)) drop-shadow(0 0 16px rgb(255 42 42 / 0.9));
@@ -84,10 +84,10 @@ body {
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    circle 300px at var(--mx, 50%) var(--my, 80%),
-    rgb(255 236 204 / 0.13) 0%,
-    rgb(255 236 204 / 0.05) 40%,
-    transparent 72%
+    circle 190px at var(--mx, 50%) var(--my, 80%),
+    rgb(255 240 215 / 0.16) 0%,
+    rgb(255 236 204 / 0.05) 35%,
+    transparent 70%
   );
 }
 
@@ -98,21 +98,17 @@ body {
   background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, rgb(0 0 0 / 0.55) 100%);
 }
 
-/* The pointer is a flashlight; the lens lights up over anything clickable. */
+/* The pointer is a single bright point; a thin ring around it marks anything clickable. */
 @media (pointer: fine) {
   html {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-45 16 16)'%3E%3Crect x='12.5' y='11' width='7' height='17' rx='1.5' fill='%231b1b1e' stroke='%23d8d0bd'/%3E%3Cpath d='M10 3.5h12l-2.5 7.5h-7z' fill='%2326262a' stroke='%23d8d0bd' stroke-linejoin='round'/%3E%3Crect x='11' y='2.6' width='10' height='1.8' fill='%238a8a90'/%3E%3Crect x='15' y='15' width='2' height='4' fill='%23ff2a2a'/%3E%3C/g%3E%3C/svg%3E")
-        7 7,
-      auto;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='%23ffe9c4' fill-opacity='0.07'/%3E%3Ccircle cx='12' cy='12' r='5' fill='%23ffe9c4' fill-opacity='0.22'/%3E%3Ccircle cx='12' cy='12' r='2.2' fill='%23fff'/%3E%3C/svg%3E") 12 12, auto;
   }
   a,
   button,
   summary,
   [role="button"],
   label[for] {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='rotate(-45 16 16)'%3E%3Ccircle cx='16' cy='3.5' r='4.5' fill='%23ffe9c4' fill-opacity='0.35'/%3E%3Crect x='12.5' y='11' width='7' height='17' rx='1.5' fill='%231b1b1e' stroke='%23d8d0bd'/%3E%3Cpath d='M10 3.5h12l-2.5 7.5h-7z' fill='%2326262a' stroke='%23d8d0bd' stroke-linejoin='round'/%3E%3Crect x='11' y='2.6' width='10' height='1.8' fill='%23ffe9c4'/%3E%3Crect x='15' y='15' width='2' height='4' fill='%23ff2a2a'/%3E%3C/g%3E%3C/svg%3E")
-        7 7,
-      pointer;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='%23ffe9c4' fill-opacity='0.1'/%3E%3Ccircle cx='12' cy='12' r='8.5' fill='none' stroke='%23ffe9c4' stroke-opacity='0.75' stroke-width='1'/%3E%3Ccircle cx='12' cy='12' r='2.6' fill='%23fff'/%3E%3C/svg%3E") 12 12, pointer;
   }
   input,
   textarea {

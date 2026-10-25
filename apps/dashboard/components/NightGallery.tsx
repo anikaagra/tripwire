@@ -5,7 +5,7 @@ import "./night-gallery.css";
 
 /**
  * The room the dashboard sits in: a gallery after hours. A polished floor
- * crossed by laser tripwires, and a flashlight that follows the pointer and
+ * crossed by laser tripwires, and a point of light that follows the pointer and
  * brightens whatever beams it passes over. Purely decorative: every layer is
  * behind the content and ignores the pointer, so text keeps full contrast.
  */
@@ -86,7 +86,7 @@ export function NightGallery() {
       <div className="gallery-floor">
         <Floor />
       </div>
-      {/* The same beams again, only visible inside the flashlight's circle */}
+      {/* The same beams again, only visible inside the circle of light */}
       <div className="gallery-lit">
         <div className="gallery-floor">
           <Floor lit />
