@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
+import { api } from "@/lib/api";
 import Link from "next/link";
 import { ArmSwitch } from "@/components/ArmSwitch";
 import { Beam, type BeamMark, type BeamState } from "@/components/Beam";

@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
+import { api } from "@/lib/api";
 
 /** Mobile-friendly single-approval page: one sentence, the request, approve/deny. */
 export default function ApprovePage({ params }: { params: Promise<{ id: string }> }) {

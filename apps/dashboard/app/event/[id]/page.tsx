@@ -3,7 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
+import { api } from "@/lib/api";
 import { DecisionChip, DecisionIcon } from "@/components/DecisionChip";
 import { formatUsd } from "@/lib/format";
 import { EvidenceDocument, Explanation } from "@/components/Explanation";
