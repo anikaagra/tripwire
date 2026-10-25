@@ -1,4 +1,4 @@
-import { ShieldAlert, ShieldCheck, ShieldOff, ShieldQuestion, Eye } from "lucide-react";
+import { Eye, ShieldAlert, ShieldCheck, ShieldOff, ShieldQuestion } from "lucide-react";
 import "./live-hud.css";
 
 /**
@@ -30,24 +30,33 @@ export function liveStatus(mode: string, latestDecision: string | undefined, pen
   return "secure";
 }
 
-export function StatusReadout({ status, mode, detail }: { status: LiveStatus; mode: string; detail?: string }) {
+export function StatusReadout({
+  status,
+  mode,
+  backend,
+  detail,
+}: {
+  status: LiveStatus;
+  mode: string;
+  backend?: string;
+  detail?: string;
+}) {
   const c = CONFIG[status];
   return (
     <div
       role="status"
       aria-live="polite"
-      className={`relative flex items-center gap-4 border bg-panel/80 px-4 py-3 ${c.border} ${c.pulse ? `status-pulse status-pulse-${c.pulse}` : ""}`}
+      className={`relative flex items-center gap-4 overflow-hidden border bg-panel/80 px-4 py-3 ${c.border} ${c.pulse ? `status-pulse status-pulse-${c.pulse}` : ""}`}
     >
-      <c.Icon aria-hidden className={`h-9 w-9 shrink-0 ${c.tone}`} strokeWidth={1.5} />
-      <div className="min-w-0">
+      {/* A faint HUD grid drifting behind the readout. */}
+      <span aria-hidden className="hud-grid pointer-events-none absolute inset-0" />
+      <c.Icon aria-hidden className={`relative h-9 w-9 shrink-0 ${c.tone}`} strokeWidth={1.5} />
+      <div className="relative min-w-0 flex-1">
         <p className={`display-caps text-3xl leading-none ${c.tone}`}>{c.word}</p>
-        {/* A detail (what was stopped, what's waiting) wins over the mode line: it's always enforce then. */}
-        <p className="mt-1 font-mono text-sm text-muted">
-          {detail ?? (
-            <>
-              {MODE_NOTE[mode] ?? ""} · <span className="whitespace-nowrap text-foreground">--mode {mode}</span>
-            </>
-          )}
+        {detail && <p className="mt-1 font-mono text-sm text-foreground">{detail}</p>}
+        <p className="mt-0.5 font-mono text-sm text-muted">
+          {MODE_NOTE[mode] ?? ""} · <span className="whitespace-nowrap text-foreground">--mode {mode}</span>
+          {backend && <> · {backend === "nessie" ? "Capital One Nessie" : "local bank"}</>}
         </p>
       </div>
     </div>

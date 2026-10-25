@@ -13,7 +13,7 @@ import { formatClock } from "@/lib/replay";
 import { useInbox } from "@/lib/context";
 import { TraceLine } from "@/components/FirewallTrace";
 import { LiveIndicator, StatusReadout, liveStatus } from "@/components/StatusReadout";
-import { Activity, ArrowRightLeft, Inbox, Landmark, Mail, ReceiptText, Send, Wallet, type LucideIcon } from "lucide-react";
+import { Activity, ArrowRightLeft, Eye, Inbox, Landmark, Mail, ReceiptText, Send, Wallet, Zap, type LucideIcon } from "lucide-react";
 
 const TOOL_ICON: Record<string, LucideIcon> = {
   list_emails: Inbox,
@@ -96,7 +96,12 @@ export default function SessionPage() {
           The counter columns have fixed widths so nothing shifts when a number grows. */}
       <div className="-mt-3 grid gap-x-8 gap-y-5 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
         <div className="flex min-w-0 flex-col gap-3">
-          <StatusReadout status={status} mode={session.mode} detail={statusDetail} />
+          <StatusReadout
+            status={status}
+            mode={session.mode}
+            backend={envState?.backend}
+            detail={statusDetail}
+          />
           <p className="border-l-2 border-mark pl-3 text-lg leading-snug">
             <span className="display-caps mr-2 text-sm text-muted">You asked</span>
             {session.intent ? (
@@ -160,7 +165,7 @@ export default function SessionPage() {
               const email = e.tool === "read_email" ? inbox?.get(String(e.args.id)) : undefined;
               const ToolIcon = TOOL_ICON[e.tool] ?? Activity;
               return (
-                <li key={e.id} className={isLive(e.id) ? "row-enter" : undefined}>
+                <li key={e.id} className={isLive(e.id) ? "row-glow" : undefined}>
                   <Link
                     href={`/event/${e.id}`}
                     className={`grid grid-cols-[auto_1fr_auto] items-start gap-x-4 gap-y-0.5 border-l-4 px-4 py-2.5 hover:bg-panel-raised stage:py-1.5 sm:grid-cols-[3.5rem_5.5rem_1fr_auto] sm:px-5 ${
@@ -174,7 +179,17 @@ export default function SessionPage() {
                       +{formatClock(Math.max(0, e.ts - session.startedAt))}
                       {/* Reads pass straight through; actions are held until Tripwire decides. */}
                       <span className={`display-caps text-xs ${e.kind === "sink" ? "text-foreground" : "text-muted"}`}>
-                        {e.kind === "sink" ? "Acts · held" : "Reads"}
+                        {e.kind === "sink" ? (
+                          <>
+                            <Zap aria-hidden className="mr-0.5 inline-block h-3 w-3 -translate-y-px" />
+                            Acts · held
+                          </>
+                        ) : (
+                          <>
+                            <Eye aria-hidden className="mr-0.5 inline-block h-3 w-3 -translate-y-px" />
+                            Reads
+                          </>
+                        )}
                       </span>
                     </span>
                     {/* Phones: step, time and chip on one line, the action full width below */}
