@@ -13,7 +13,8 @@
     "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "convex": "1.48.0"
+    "convex": "1.48.0",
+    "lucide-react": "^0.475.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
