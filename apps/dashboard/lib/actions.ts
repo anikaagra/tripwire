@@ -46,3 +46,27 @@ export function actionString(event: { tool: string; args: Record<string, unknown
   const t = actionText(event);
   return t.value ? `${t.verb} ${t.value}` : t.verb;
 }
+
+/**
+ * A one-line headline in the user's terms for a blocked call whose recipient
+ * came from something the agent read ("You didn't ask to send money to 4417.").
+ * Null when no template fits; callers fall back to the guard's reason.
+ */
+export function plainHeadline(event: {
+  tool: string;
+  decision: string;
+  taintHits: { argKey: string; value: string }[];
+}): string | null {
+  if (event.decision !== "block") return null;
+  const hit = event.taintHits.find((h) => ["to_account", "to", "recipient", "payee"].includes(h.argKey));
+  if (!hit) return null;
+  if (event.tool === "send_email") return `You didn't ask to email ${hit.value}.`;
+  if (event.tool === "transfer") return `You didn't ask to send money to ${hit.value}.`;
+  return null;
+}
+
+/** `You asked: "…"` → `…` (the guard stores the sentence with its label). */
+export function stripYouAsked(text: string): string {
+  const m = /^You asked:\s*"([\s\S]*)"\s*$/.exec(text.trim());
+  return m ? m[1]! : text;
+}
