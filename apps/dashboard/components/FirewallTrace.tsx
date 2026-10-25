@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { DecisionChip } from "@/components/DecisionChip";
 import { Label, Panel } from "@/components/Panel";
 import { usePolicy, type ToolPolicyView } from "@/lib/context";
-import { MATRIX, rowLit, traceOf, type Trace } from "@/lib/trace";
+import { MATRIX, rowLit, traceOf, type Trace, type TraceEvent } from "@/lib/trace";
 
 interface TraceableEvent {
   server: string;
@@ -238,7 +238,7 @@ function DecisionTable({ trace }: { trace: Trace }) {
 }
 
 /** One line per sink row on the live page: the three checks and how they came out. */
-export function TraceLine({ event }: { event: Pick<TraceableEvent, "kind" | "decision" | "ruleHits" | "taintHits" | "explanation"> }) {
+export function TraceLine({ event }: { event: TraceEvent }) {
   const t = traceOf(event);
   if (!t) return null;
   const judge =

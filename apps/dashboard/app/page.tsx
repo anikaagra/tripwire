@@ -2,28 +2,17 @@
 
 import { useState, type ReactNode } from "react";
 import { useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
+import { api } from "@/lib/api";
 import Link from "next/link";
 import { Beam, type BeamMark, type BeamState } from "@/components/Beam";
 import { BigNumber } from "@/components/BigNumber";
-import { DecisionChip, DecisionIcon } from "@/components/DecisionChip";
+import { DecisionIcon } from "@/components/DecisionChip";
+import { TapeRowContent, tapeRowClass } from "@/components/TapeRow";
 import { Label, Panel } from "@/components/Panel";
-import { actionString, actionText } from "@/lib/actions";
+import { actionString } from "@/lib/actions";
 import { formatClock } from "@/lib/replay";
 import { useInbox } from "@/lib/context";
-import { TraceLine } from "@/components/FirewallTrace";
 import { LiveIndicator, StatusReadout, liveStatus } from "@/components/StatusReadout";
-import { Activity, ArrowRightLeft, Eye, Inbox, Landmark, Mail, ReceiptText, Send, Wallet, Zap, type LucideIcon } from "lucide-react";
-
-const TOOL_ICON: Record<string, LucideIcon> = {
-  list_emails: Inbox,
-  read_email: Mail,
-  send_email: Send,
-  get_balance: Wallet,
-  list_bills: ReceiptText,
-  pay_bill: Landmark,
-  transfer: ArrowRightLeft,
-};
 
 export default function SessionPage() {
   const session = useQuery(api.sessions.currentSession, {});
@@ -159,61 +148,18 @@ export default function SessionPage() {
           <p className="px-5 py-6 text-muted">Armed and waiting for the agent&apos;s first tool call.</p>
         ) : (
           <ol className="divide-y divide-border">
-            {newest.map((e) => {
-              const t = actionText(e);
-              const blocked = e.decision === "block";
-              const email = e.tool === "read_email" ? inbox?.get(String(e.args.id)) : undefined;
-              const ToolIcon = TOOL_ICON[e.tool] ?? Activity;
-              return (
-                <li key={e.id} className={isLive(e.id) ? "row-glow" : undefined}>
-                  <Link
-                    href={`/event/${e.id}`}
-                    className={`grid grid-cols-[auto_1fr_auto] items-start gap-x-4 gap-y-0.5 border-l-4 px-4 py-2.5 hover:bg-panel-raised stage:py-1.5 sm:grid-cols-[3.5rem_5.5rem_1fr_auto] sm:px-5 ${
-                      blocked ? "border-block bg-block-bg/60" : e.decision === "ask" ? "border-ask" : "border-transparent"
-                    }`}
-                  >
-                    <span className="font-mono text-base tabular-nums text-muted">
-                      {String(stepOf.get(e.id)).padStart(2, "0")}
-                    </span>
-                    <span className="flex flex-col font-mono text-base tabular-nums text-muted">
-                      +{formatClock(Math.max(0, e.ts - session.startedAt))}
-                      {/* Reads pass straight through; actions are held until Tripwire decides. */}
-                      <span className={`display-caps text-xs ${e.kind === "sink" ? "text-foreground" : "text-muted"}`}>
-                        {e.kind === "sink" ? (
-                          <>
-                            <Zap aria-hidden className="mr-0.5 inline-block h-3 w-3 -translate-y-px" />
-                            Acts · held
-                          </>
-                        ) : (
-                          <>
-                            <Eye aria-hidden className="mr-0.5 inline-block h-3 w-3 -translate-y-px" />
-                            Reads
-                          </>
-                        )}
-                      </span>
-                    </span>
-                    {/* Phones: step, time and chip on one line, the action full width below */}
-                    <span className="order-last col-span-3 min-w-0 sm:order-none sm:col-span-1">
-                      <span className={`block text-xl ${e.kind === "source" ? "text-muted" : "text-foreground"}`}>
-                        <ToolIcon aria-hidden className="mr-2 inline-block h-5 w-5 -translate-y-0.5" strokeWidth={1.5} />
-                        {t.verb}
-                        {email?.subject ? (
-                          <span className="ml-2 break-words text-foreground">&ldquo;{email.subject}&rdquo;</span>
-                        ) : (
-                          t.value && <span className={`ml-2 break-words font-bold ${blocked ? "text-block" : ""}`}>{t.value}</span>
-                        )}
-                      </span>
-                      {email?.from && <span className="block text-base text-muted">from {email.from}</span>}
-                      {e.kind !== "source" && <span className="block text-base text-muted sm:truncate">{e.reason}</span>}
-                      {e.kind === "sink" && <TraceLine event={e} />}
-                    </span>
-                    <span className="justify-self-end">
-                      <DecisionChip decision={e.decision} />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
+            {newest.map((e) => (
+              <li key={e.id} className={isLive(e.id) ? "row-glow" : undefined}>
+                <Link href={`/event/${e.id}`} className={tapeRowClass(e.decision)}>
+                  <TapeRowContent
+                    step={stepOf.get(e.id) ?? 0}
+                    clock={`+${formatClock(Math.max(0, e.ts - session.startedAt))}`}
+                    event={e}
+                    email={e.tool === "read_email" ? inbox.get(String(e.args.id)) : undefined}
+                  />
+                </Link>
+              </li>
+            ))}
           </ol>
         )}
       </Panel>

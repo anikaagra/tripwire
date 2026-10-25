@@ -3,8 +3,9 @@ export function OfflineBadge() {
   return (
     <span
       title="Loaded from public/recordings (Convex unreachable or ?source=file)"
-      className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted"
+      className="display-caps inline-flex items-center gap-2 border border-ask px-2.5 py-0.5 text-sm text-ask"
     >
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ask" />
       Offline copy
     </span>
   );
