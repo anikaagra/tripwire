@@ -58,6 +58,7 @@ export const recentRecordings = query({
       createdAt: r.createdAt,
       intent: r.intent,
       mode: r.mode,
+      scenario: r.scenario,
       backend: r.backend,
       eventCount: r.events.length,
       durationMs: r.events.length ? r.events[r.events.length - 1]!.offsetMs : 0,
