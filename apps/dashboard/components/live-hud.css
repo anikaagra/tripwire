@@ -1,0 +1,45 @@
+/* Live-page motion from Anika G's timeline mockup, in the vault palette. */
+
+/* The status readout breathes while something needs attention. */
+.status-pulse-block {
+  --pulse: 255 42 42;
+}
+.status-pulse-ask {
+  --pulse: 255 176 32;
+}
+.status-pulse {
+  animation: status-pulse 2.2s ease-in-out infinite;
+}
+@keyframes status-pulse {
+  0%, 100% { box-shadow: 0 0 18px 0 rgb(var(--pulse) / 0.22); }
+  50% { box-shadow: 0 0 34px 3px rgb(var(--pulse) / 0.45); }
+}
+
+/* Live dot. */
+.live-ping {
+  animation: live-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes live-ping {
+  75%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* A radar sweep: one red wedge turning inside the ring. */
+.radar::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 9999px;
+  background: conic-gradient(from 0deg, rgb(255 42 42 / 0.75), transparent 28%);
+  animation: radar-sweep 3s linear infinite;
+}
+@keyframes radar-sweep {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-pulse,
+  .live-ping,
+  .radar::after {
+    animation: none;
+  }
+}

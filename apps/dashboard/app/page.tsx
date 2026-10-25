@@ -4,7 +4,6 @@ import { useState, type ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import Link from "next/link";
-import { ArmSwitch } from "@/components/ArmSwitch";
 import { Beam, type BeamMark, type BeamState } from "@/components/Beam";
 import { BigNumber } from "@/components/BigNumber";
 import { DecisionChip, DecisionIcon } from "@/components/DecisionChip";
@@ -13,6 +12,18 @@ import { actionString, actionText } from "@/lib/actions";
 import { formatClock } from "@/lib/replay";
 import { useInbox } from "@/lib/context";
 import { TraceLine } from "@/components/FirewallTrace";
+import { LiveIndicator, StatusReadout, liveStatus } from "@/components/StatusReadout";
+import { Activity, ArrowRightLeft, Inbox, Landmark, Mail, ReceiptText, Send, Wallet, type LucideIcon } from "lucide-react";
+
+const TOOL_ICON: Record<string, LucideIcon> = {
+  list_emails: Inbox,
+  read_email: Mail,
+  send_email: Send,
+  get_balance: Wallet,
+  list_bills: ReceiptText,
+  pay_bill: Landmark,
+  transfer: ArrowRightLeft,
+};
 
 export default function SessionPage() {
   const session = useQuery(api.sessions.currentSession, {});
@@ -63,6 +74,13 @@ export default function SessionPage() {
   const lastLiveBlock = liveBlocks[liveBlocks.length - 1];
   const stepOf = new Map(sorted.map((e, i) => [e.id, i + 1]));
   const attacker = envState?.attackerReceived;
+  const status = liveStatus(session.mode, newest[0]?.decision, pending?.length ?? 0);
+  const statusDetail =
+    status === "block" && newest[0]
+      ? `Stopped: ${actionString(newest[0])}`
+      : status === "ask" && pending
+        ? `${pending.length} action${pending.length === 1 ? "" : "s"} held for you`
+        : undefined;
 
   return (
     <div className="flex flex-col gap-6 stage:gap-3">
@@ -78,7 +96,7 @@ export default function SessionPage() {
           The counter columns have fixed widths so nothing shifts when a number grows. */}
       <div className="-mt-3 grid gap-x-8 gap-y-5 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
         <div className="flex min-w-0 flex-col gap-3">
-          <ArmSwitch mode={session.mode} />
+          <StatusReadout status={status} mode={session.mode} detail={statusDetail} />
           <p className="border-l-2 border-mark pl-3 text-lg leading-snug">
             <span className="display-caps mr-2 text-sm text-muted">You asked</span>
             {session.intent ? (
@@ -124,7 +142,14 @@ export default function SessionPage() {
       })}
 
       {/* The flight recorder: newest call first, right under the beam */}
-      <Panel title="Flight recorder" aside={`${sorted.length} call${sorted.length === 1 ? "" : "s"}`} bodyClassName="">
+      <Panel
+        title={
+          <span className="flex items-center gap-3">
+            <LiveIndicator live={!off} />
+            Flight recorder
+          </span>
+        }
+        aside={`${sorted.length} call${sorted.length === 1 ? "" : "s"}`} bodyClassName="">
         {sorted.length === 0 ? (
           <p className="px-5 py-6 text-muted">Armed and waiting for the agent&apos;s first tool call.</p>
         ) : (
@@ -133,6 +158,7 @@ export default function SessionPage() {
               const t = actionText(e);
               const blocked = e.decision === "block";
               const email = e.tool === "read_email" ? inbox?.get(String(e.args.id)) : undefined;
+              const ToolIcon = TOOL_ICON[e.tool] ?? Activity;
               return (
                 <li key={e.id} className={isLive(e.id) ? "row-enter" : undefined}>
                   <Link
@@ -144,12 +170,17 @@ export default function SessionPage() {
                     <span className="font-mono text-base tabular-nums text-muted">
                       {String(stepOf.get(e.id)).padStart(2, "0")}
                     </span>
-                    <span className="font-mono text-base tabular-nums text-muted">
+                    <span className="flex flex-col font-mono text-base tabular-nums text-muted">
                       +{formatClock(Math.max(0, e.ts - session.startedAt))}
+                      {/* Reads pass straight through; actions are held until Tripwire decides. */}
+                      <span className={`display-caps text-xs ${e.kind === "sink" ? "text-foreground" : "text-muted"}`}>
+                        {e.kind === "sink" ? "Acts · held" : "Reads"}
+                      </span>
                     </span>
                     {/* Phones: step, time and chip on one line, the action full width below */}
                     <span className="order-last col-span-3 min-w-0 sm:order-none sm:col-span-1">
                       <span className={`block text-xl ${e.kind === "source" ? "text-muted" : "text-foreground"}`}>
+                        <ToolIcon aria-hidden className="mr-2 inline-block h-5 w-5 -translate-y-0.5" strokeWidth={1.5} />
                         {t.verb}
                         {email?.subject ? (
                           <span className="ml-2 break-words text-foreground">&ldquo;{email.subject}&rdquo;</span>
