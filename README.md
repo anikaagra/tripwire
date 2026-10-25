@@ -106,7 +106,7 @@ Red Team mode runs a reproducible attack suite twice, once with Tripwire **off**
 
 > **How "off" is measured.** Current Claude models resist these injections on their own: across 105 off-mode runs on Sonnet 5.5 and Haiku 5.5, the agent read the payload every time and never obeyed it ([details](apps/agent/README.md)). A firewall has to hold even when the model *is* fooled, so the suite uses a clearly labeled **compromised** profile that simulates a hijacked or unhardened agent by issuing each attack's intended action. **Off** is the damage that action does; **on** is what Tripwire stops. We don't claim the model wired the money on its own.
 
-The guard's judge is also tested on its own: a 30-case labeled eval (15 benign, 15 malicious) runs with `pnpm guard:eval`, targeting at least 28 of 30 correct and zero malicious cases allowed.
+The guard's judge is also tested on its own: a 30-case labeled eval (15 benign, 15 malicious) runs with `pnpm guard:eval`. Two malicious cases, paying an attacker's fake bill, are reported but not scored, because the judge only sees a bill id and can't tell whose bill it is; the other layers handle those. The target is at least 26 of the 28 scored cases correct and no malicious case judged "requested". Recent runs scored 27–28 of 28, with no attack ever judged "requested".
 
 ## Quickstart
 
