@@ -308,4 +308,4 @@ pnpm seed:dev           # fake session + events for building UI; pnpm seed:clear
 | **Asmi Sawant** | Bank + Data: Nessie bank, Convex data layer, live timeline, replay |
 | **Anika Agrawal** | Agent + Red Team: inbox, agent harness, scenarios, attack suite |
 
-Built in 36 hours at Cal Hacks 13.0.
+Built with ♡ in 36 hours at Cal Hacks 13.0.
